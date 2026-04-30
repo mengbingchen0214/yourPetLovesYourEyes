@@ -24,13 +24,6 @@ npm install
 npm run dev
 ```
 
-### 打包
-
-```bash
-npm run build
-# 输出到 dist/
-```
-
 ---
 
 ## 使用说明
