@@ -1,0 +1,43 @@
+{
+  "name": "eye-pet",
+  "version": "1.0.0",
+  "description": "护眼Pet - Mac桌面宠物提醒你休息眼睛",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "build": "electron-builder --mac && bash scripts/package.sh"
+  },
+  "build": {
+    "appId": "com.eyepet.app",
+    "productName": "护眼Pet",
+    "icon": "build/icon.icns",
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.utilities",
+      "identity": "Apple Development: mengbingchen0214@gmail.com (7FH56SF756)",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "notarize": false
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "dialog-preload.js",
+      "input-dialog.html",
+      "overlay.html",
+      "assets/**"
+    ],
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets"
+      }
+    ]
+  },
+  "devDependencies": {
+    "app-builder-bin": "^5.0.0-alpha.10",
+    "electron": "^41.3.0",
+    "electron-builder": "^25.0.0"
+  }
+}

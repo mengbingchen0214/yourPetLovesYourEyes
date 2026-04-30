@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>护眼Pet - 眺眺蛙</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}
+
+/* ===================== 宠物容器 ===================== */
+#pet-container {
+  position: relative;
+  width: 200px;
+  height: 260px;
+  cursor: grab;
+}
+
+#pet-container:active {
+  cursor: grabbing;
+}
+
+/* ===================== 打招呼界面 ===================== */
+#greeting-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border-radius: 20px;
+}
+
+.greeting-text {
+  font-size: 13px;
+  color: #333;
+  margin-top: 8px;
+  text-align: center;
+  line-height: 1.4;
+  background: rgba(255,255,255,0.85);
+  padding: 6px 12px;
+  border-radius: 10px;
+}
+
+.start-btn {
+  background: linear-gradient(135deg, #FF69B4, #FF1493);
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(255, 105, 180, 0.4);
+  transition: transform 0.2s;
+}
+
+.start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.5);
+}
+
+/* ===================== 宠物本体 ===================== */
+.pet {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+
+.pet.visible {
+  display: block;
+}
+
+#pet-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* 睡觉时轻微浮动动画 */
+.pet.sleeping #pet-sprite {
+  animation: sleep-float 3s ease-in-out infinite;
+}
+
+@keyframes sleep-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* 休息时轻点头 */
+.pet.resting #pet-sprite {
+  animation: rest-nod 4s ease-in-out infinite;
+}
+
+@keyframes rest-nod {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* ===================== 休息界面（文字已移除，改用全屏灰色遮罩窗口） ===================== */
+#rest-screen {
+  display: none;
+}
+
+/* ===================== 气泡提示 ===================== */
+#speech-bubble {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  color: #333;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 100;
+}
+
+#speech-bubble.show {
+  opacity: 1;
+}
+
+#speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid white;
+}
+
+/* ===================== 控制按钮（已移到托盘菜单） ===================== */
+#control-btns {
+  display: none !important;
+}
+
+/* ===================== 遮罩开关 ===================== */
+#overlay-toggle {
+  display: none !important;
+}
+
+/* ===================== 暂停遮罩 ===================== */
+#pause-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 997;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#pause-overlay.visible {
+  display: flex;
+}
+
+.pause-text {
+  font-size: 20px;
+  color: white;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+</style>
+</head>
+<body>
+
+<!-- 宠物容器 -->
+<div id="pet-container">
+  <div id="speech-bubble"></div>
+  
+  <!-- 打招呼界面 -->
+  <div id="greeting-screen" style="background: rgba(200,200,255,0.9); border-radius: 20px; padding: 10px;">
+    <img src="assets/angel.png" alt="安球" style="width:120px;height:120px;object-fit:contain;">
+    <div class="greeting-text">我是安球，阿弥陀佛。</div>
+    <button class="start-btn" onclick="startCycle()">开始护眼</button>
+  </div>
+  
+  <!-- 宠物主体 -->
+  <div class="pet" id="pet">
+    <img id="pet-sprite" src="assets/angel.png" alt="护眼宠物">
+  </div>
+
+
+</div>
+
+<!-- 休息界面（保留空容器兼容旧逻辑） -->
+<div id="rest-screen"></div>
+
+<!-- 暂停遮罩 -->
+<div id="pause-overlay">
+  <div class="pause-text">⏸ 已暂停</div>
+</div>
+
+<!-- 遮罩开关 -->
+<button id="overlay-toggle" onclick="toggleOverlay()">🌓 遮罩</button>
+
+<script>
+// ===================== 状态变量 =====================
+let currentState = 'greeting';
+let cycleCount = 0;
+let restSeconds = 20;
+let sleepMinutesLeft = 20;
+let restCountdown = null;
+let sleepCountdown = null;
+let overlayEnabled = true;
+let lastActiveState = 'sleeping';
+const SLEEP_IMAGE = 'assets/angel.png';
+const WAKE_IMAGE = 'assets/angel——wakeup.png';
+
+// ===================== DOM 元素 =====================
+const petContainer = document.getElementById('pet-container');
+const pet = document.getElementById('pet');
+const petSprite = document.getElementById('pet-sprite');
+const greetingScreen = document.getElementById('greeting-screen');
+const speechBubble = document.getElementById('speech-bubble');
+const zzz = document.getElementById('zzz');
+const progressCircle = document.getElementById('progress-circle');
+const ringTime = document.getElementById('ring-time');  // 当前版本可能不存在，使用前都要判空
+const controlBtns = document.getElementById('control-btns');
+const restScreen = document.getElementById('rest-screen');
+const restTimer = document.getElementById('rest-timer');
+const pauseOverlay = document.getElementById('pause-overlay');
+const overlayToggle = document.getElementById('overlay-toggle');
+
+// ===================== 初始化 =====================
+async function init() {
+  if (window.eyePet) {
+    const state = await window.eyePet.getState();
+    handleStateChange(state);
+    
+    window.eyePet.onStateChange((data) => {
+      handleStateChange(data);
+    });
+    
+    window.eyePet.onProgressUpdate((data) => {
+      sleepMinutesLeft = data.minutesLeft;
+      if (ringTime) ringTime.textContent = data.minutesLeft;
+    });
+
+    window.eyePet.onOverlayToggle((enabled) => {
+      overlayEnabled = enabled;
+    });
+  }
+  
+  // 双击提示
+  document.addEventListener('dblclick', () => {
+    showBubble('右键托盘图标查看设置');
+  });
+  
+  // 拖动实现
+  let isDragging = false;
+  
+  petContainer.addEventListener('mousedown', (e) => {
+    if (e.button === 0) {
+      isDragging = true;
+      window.eyePet.startDrag(e.screenX, e.screenY);
+    }
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      window.eyePet.drag(e.screenX, e.screenY);
+    }
+  });
+  
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      window.eyePet.endDrag();
+    }
+  });
+}
+
+// ===================== 状态处理 =====================
+function handleStateChange(data) {
+  currentState = data.state;
+  cycleCount = data.cycleCount;
+
+  // 隐藏所有状态界面
+  greetingScreen.style.display = 'none';
+  pet.classList.remove('visible', 'sleeping', 'resting');
+  restScreen.classList.remove('visible');
+  pauseOverlay.classList.remove('visible');
+  if (zzz) zzz.classList.remove('visible');
+  if (controlBtns) controlBtns.classList.remove('visible');
+  overlayToggle.classList.remove('visible');
+
+  // 重置进度环（当前版本可能没有进度环DOM）
+  if (progressCircle) progressCircle.style.strokeDashoffset = 106.8;
+  if (ringTime) ringTime.textContent = '20';
+
+  switch (currentState) {
+    case 'greeting':
+      clearCountdowns();
+      if (petSprite) petSprite.src = SLEEP_IMAGE;
+      greetingScreen.style.display = 'flex';
+      break;
+
+    case 'sleeping':
+      lastActiveState = 'sleeping';
+      if (petSprite) petSprite.src = SLEEP_IMAGE;
+      pet.classList.add('visible', 'sleeping');
+      if (zzz) zzz.classList.add('visible');
+      startSleepCountdown();
+      break;
+
+    case 'resting':
+      lastActiveState = 'resting';
+      if (petSprite) petSprite.src = data.restImage || WAKE_IMAGE;
+      pet.classList.add('visible', 'resting');
+      overlayToggle.classList.add('visible');
+      startRestCountdown();
+      break;
+
+    case 'paused':
+      if (petSprite) {
+        petSprite.src = (lastActiveState === 'resting') ? WAKE_IMAGE : SLEEP_IMAGE;
+      }
+      pet.classList.add('visible');
+      pauseOverlay.classList.add('visible');
+      clearCountdowns();
+      break;
+  }
+}
+
+// ===================== 倒计时逻辑 =====================
+function startSleepCountdown() {
+  sleepMinutesLeft = 20;
+  if (ringTime) ringTime.textContent = '20';
+  
+  let elapsed = 0;
+  const total = 20 * 60;
+  
+  sleepCountdown = setInterval(() => {
+    if (currentState !== 'sleeping') {
+      clearInterval(sleepCountdown);
+      return;
+    }
+    
+    elapsed++;
+    const progress = elapsed / total;
+    const offset = 106.8 * (1 - progress);
+    if (progressCircle) progressCircle.style.strokeDashoffset = offset;
+    
+    const minutesLeft = Math.ceil((total - elapsed) / 60);
+    if (minutesLeft !== sleepMinutesLeft && minutesLeft > 0) {
+      sleepMinutesLeft = minutesLeft;
+      if (ringTime) ringTime.textContent = minutesLeft.toString();
+    }
+    
+    if (progress >= 1) {
+      if (ringTime) ringTime.textContent = '0';
+    }
+  }, 1000);
+}
+
+function startRestCountdown() {
+  restSeconds = 20;
+  if (restTimer) restTimer.textContent = '20';
+
+  restCountdown = setInterval(() => {
+    if (currentState !== 'resting') {
+      clearInterval(restCountdown);
+      return;
+    }
+
+    restSeconds--;
+    if (restTimer) restTimer.textContent = restSeconds.toString();
+
+    if (restSeconds <= 0) {
+      clearInterval(restCountdown);
+    }
+  }, 1000);
+}
+
+function clearCountdowns() {
+  if (sleepCountdown) clearInterval(sleepCountdown);
+  if (restCountdown) clearInterval(restCountdown);
+}
+
+// ===================== 用户操作 =====================
+async function startCycle() {
+  if (window.eyePet) {
+    await window.eyePet.startCycle();
+  }
+}
+
+async function togglePause() {
+  if (!window.eyePet) return;
+
+  if (currentState === 'paused') {
+    await window.eyePet.resumeCycle();
+  } else if (currentState === 'sleeping' || currentState === 'resting') {
+    await window.eyePet.pauseCycle();
+  }
+}
+
+async function toggleOverlay() {
+  if (window.eyePet) {
+    const result = await window.eyePet.toggleOverlay();
+    overlayEnabled = result.enabled;
+  }
+}
+
+async function quitApp() {
+  if (window.eyePet) {
+    await window.eyePet.quitApp();
+  }
+}
+
+// ===================== 气泡提示 =====================
+function showBubble(text, duration = 3000) {
+  speechBubble.textContent = text;
+  speechBubble.classList.add('show');
+  
+  setTimeout(() => {
+    speechBubble.classList.remove('show');
+  }, duration);
+}
+
+// ===================== 启动 =====================
+init();
+</script>
+
+</body>
+</html>

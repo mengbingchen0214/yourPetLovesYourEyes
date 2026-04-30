@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>护眼Pet - 把你的宠物变成超可爱桌面伙伴</title>
+<meta name="description" content="护眼Pet是一款Mac桌面宠物应用，每20分钟提醒你休息眼睛，支持上传自家宠物照片，AI帮你变成Q版超可爱风格！">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, #FFF5F7, #FFECF1);
+  min-height: 100vh;
+  color: #333;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 80px 20px 40px;
+}
+
+.hero-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #FF69B4, #FF1493);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  font-size: 48px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #FF69B4, #FF1493);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 16px;
+}
+
+.hero p {
+  font-size: 18px;
+  color: #666;
+  max-width: 500px;
+  margin: 0 auto 30px;
+  line-height: 1.6;
+}
+
+/* 演示区 */
+.demo-section {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.demo-card {
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 8px 30px rgba(255, 105, 180, 0.15);
+  text-align: center;
+}
+
+.demo-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+/* 宠物展示 */
+.pet-showcase {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.pet-item {
+  text-align: center;
+}
+
+.pet-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #FFE4EC;
+  margin-bottom: 10px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.pet-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.3);
+}
+
+.pet-label {
+  font-size: 13px;
+  color: #999;
+}
+
+/* 上传区域 */
+.upload-zone {
+  border: 2px dashed #FFB6C1;
+  border-radius: 16px;
+  padding: 30px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.upload-zone:hover {
+  border-color: #FF69B4;
+  background: #FFF5F7;
+}
+
+.upload-zone.dragover {
+  background: #FFE4EC;
+  border-color: #FF1493;
+}
+
+.upload-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.upload-text {
+  font-size: 15px;
+  color: #666;
+}
+
+.upload-text strong {
+  color: #FF69B4;
+}
+
+/* 对比展示 */
+.compare-section {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  align-items: center;
+  margin: 30px 0;
+  flex-wrap: wrap;
+}
+
+.compare-img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #FFE4EC;
+}
+
+.compare-arrow {
+  font-size: 30px;
+  color: #FF69B4;
+}
+
+/* CTA */
+.cta-section {
+  text-align: center;
+  padding: 40px 20px 60px;
+}
+
+.cta-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, #FF69B4, #FF1493);
+  color: white;
+  padding: 16px 40px;
+  border-radius: 30px;
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
+  transition: all 0.3s;
+}
+
+.cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 105, 180, 0.5);
+}
+
+/* 功能列表 */
+.features {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.feature-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.feature-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.feature-desc {
+  font-size: 13px;
+  color: #999;
+  line-height: 1.5;
+}
+
+/* 底部 */
+footer {
+  text-align: center;
+  padding: 30px;
+  color: #ccc;
+  font-size: 13px;
+}
+
+/* 价格 */
+.price-tag {
+  display: inline-block;
+  background: linear-gradient(135deg, #FF69B4, #FF1493);
+  color: white;
+  padding: 12px 30px;
+  border-radius: 30px;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 20px 0;
+}
+
+/* 小红书风格提示 */
+.rednote-tip {
+  background: #FFF5F7;
+  border-left: 4px solid #FF69B4;
+  padding: 16px 20px;
+  margin: 30px auto;
+  max-width: 600px;
+  border-radius: 0 12px 12px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.rednote-tip strong {
+  color: #FF1493;
+}
+
+/* 上传预览 */
+#preview-container {
+  display: none;
+  margin-top: 20px;
+}
+
+#preview-container.show {
+  display: block;
+}
+
+.preview-images {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">🔥 小红书爆款桌面宠物</div>
+  <h1>护眼Pet 🐾</h1>
+  <p>每20分钟提醒你休息眼睛<br>上传你的宠物，AI帮你变成Q版超可爱风格！</p>
+  
+  <div class="price-tag">免费桌面端 × 付费Q版处理</div>
+</section>
+
+<!-- 演示卡片 -->
+<section class="demo-section">
+  <div class="demo-card">
+    <div class="demo-title">✨ 3步拥有你的专属桌面宠物</div>
+    
+    <div class="pet-showcase">
+      <div class="pet-item">
+        <img class="pet-avatar" src="https://img.freepik.com/free-photo/cute-cat-portrait_1268-20707.jpg?w=200&h=200&fit=crop" alt="预设猫咪">
+        <div class="pet-label">🐱 预设猫咪</div>
+      </div>
+      <div class="pet-item">
+        <img class="pet-avatar" src="https://img.freepik.com/free-photo/cute-dog_1268-20520.jpg?w=200&h=200&fit=crop" alt="预设狗狗">
+        <div class="pet-label">🐶 预设狗狗</div>
+      </div>
+      <div class="pet-item">
+        <img class="pet-avatar" src="https://img.freepik.com/free-photo/cute-rabbit_1268-20579.jpg?w=200&h=200&fit=crop" alt="预设兔子">
+        <div class="pet-label">🐰 预设兔子</div>
+      </div>
+    </div>
+    
+    <!-- 上传区域 -->
+    <div class="upload-zone" id="upload-zone">
+      <div class="upload-icon">📸</div>
+      <div class="upload-text">
+        <strong>上传你的宠物照片</strong><br>
+        试试把你的猫/狗变成Q版桌面宠物
+      </div>
+      <input type="file" id="pet-input" accept="image/*" style="display:none">
+    </div>
+    
+    <!-- 预览 -->
+    <div id="preview-container">
+      <div class="compare-section">
+        <div>
+          <img class="compare-img" id="original-img" src="" alt="原图">
+          <div class="pet-label">原图</div>
+        </div>
+        <div class="compare-arrow">→</div>
+        <div>
+          <img class="compare-img" id="q-version-img" src="" alt="Q版">
+          <div class="pet-label">Q版化 🔥</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="rednote-tip">
+      <strong>💡 小红书变现提示：</strong><br>
+      "把自己的宠物变成Q版桌面宠物的教程" + 对比图，点赞收藏特别高！很多人问怎么做的～
+    </div>
+  </div>
+</section>
+
+<!-- 功能 -->
+<section class="features">
+  <div class="feature-card">
+    <div class="feature-icon">👀</div>
+    <div class="feature-title">护眼提醒</div>
+    <div class="feature-desc">每20分钟提醒望远护眼<br>科学用眼，效率更高</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🤖</div>
+    <div class="feature-title">AI Q版化</div>
+    <div class="feature-desc">上传即生成<br>圆润大眼睛超可爱</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🖥️</div>
+    <div class="feature-title">桌面常驻</div>
+    <div class="feature-desc">始终置顶<br>可爱陪伴每一天</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🚀</div>
+    <div class="feature-title">轻量快速</div>
+    <div class="feature-desc">不到10MB<br>比微信还小</div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="demo-title">现在下载 Mac 桌面端</div>
+  <a href="https://github.com/your-repo/eye-pet/releases" class="cta-btn">
+    ⬇️ 下载护眼Pet for Mac
+  </a>
+  <div style="margin-top:16px;font-size:13px;color:#999;">
+    支持 macOS 12+ · 无需联网即可使用提醒功能
+  </div>
+</section>
+
+<!-- 页脚 -->
+<footer>
+  <p>护眼Pet · 用AI守护你的眼睛 🐾</p>
+  <p style="margin-top:8px;">小红书同名：护眼Pet</p>
+</footer>
+
+<script>
+// 简单的图片预览 + 伪Q版处理（实际需要调用后端API）
+const uploadZone = document.getElementById('upload-zone');
+const petInput = document.getElementById('pet-input');
+const previewContainer = document.getElementById('preview-container');
+const originalImg = document.getElementById('original-img');
+const qVersionImg = document.getElementById('q-version-img');
+
+uploadZone.addEventListener('click', () => petInput.click());
+
+uploadZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadZone.classList.add('dragover');
+});
+
+uploadZone.addEventListener('dragleave', () => {
+  uploadZone.classList.remove('dragover');
+});
+
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    handleFile(file);
+  }
+});
+
+petInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+});
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    originalImg.src = e.target.result;
+    // 伪Q版处理演示（实际需调用后端）
+    qVersionImg.src = e.target.result; // 这里实际会调用API返回Q版图
+    previewContainer.classList.add('show');
+    uploadZone.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+</script>
+
+</body>
+</html>
