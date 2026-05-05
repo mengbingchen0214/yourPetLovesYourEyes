@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "dev": "electron .",
+    "test": "node test/state-machine.test.js",
     "build": "electron-builder --mac && bash scripts/package.sh"
   },
   "build": {
@@ -26,6 +27,7 @@
       "dialog-preload.js",
       "input-dialog.html",
       "overlay.html",
+      "lib/**",
       "assets/**"
     ],
     "extraResources": [
