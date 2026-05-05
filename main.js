@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, screen, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, globalShortcut, screen, dialog, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -301,8 +301,8 @@ ipcMain.handle('get-license-info', () => {
   };
 });
 
-ipcMain.handle('activate-license', (_, key) => {
-  const result = license.activateLicense(key);
+ipcMain.handle('activate-license', async (_, key) => {
+  const result = await license.activateLicense(key);
   if (result.success) {
     ctx.notifyRenderer('license-change', { tier: result.tier });
     trayManager.updateTrayMenu(ctx);
@@ -346,6 +346,63 @@ ipcMain.handle('show-license-dialog', () => {
   });
 });
 
+ipcMain.handle('open-external', (_, url) => {
+  if (url) shell.openExternal(url);
+});
+
+const PAYMENT_URLS = {
+  'buy-alipay': 'https://eyepet.lemonsqueezy.com/checkout/buy/PRO_VARIANT_ID',
+  'buy-wechat': 'https://eyepet.lemonsqueezy.com/checkout/buy/PRO_VARIANT_ID',
+  'buy-intl': 'https://eyepet.lemonsqueezy.com/checkout/buy/PRO_VARIANT_ID'
+};
+
+// Backup: afdian.com (爱发电) for WeChat Pay in China
+// 'buy-wechat': 'https://afdian.com/a/YOUR_USERNAME?pay_type=wx',
+// Note: Create afdian account and replace YOUR_USERNAME with your page username
+
+ipcMain.handle('show-upgrade-dialog', () => {
+  if (win) { win.show(); win.focus(); }
+  return new Promise((resolve) => {
+    const dlg = new BrowserWindow({
+      width: 340,
+      height: 530,
+      title: '升级到 Pro - EyePet',
+      resizable: false,
+      minimizable: false,
+      maximizable: false,
+      modal: false,
+      parent: win,
+      webPreferences: {
+        preload: path.join(__dirname, 'dialog-preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+      }
+    });
+    dlg.setMenuBarVisibility(false);
+    dlg.loadFile('upgrade-dialog.html');
+
+    function cleanup() {
+      ipcMain.removeListener('upgrade-action', onAction);
+      if (!dlg.isDestroyed()) dlg.close();
+    }
+
+    function onAction(_, action) {
+      if (action.startsWith('buy-')) {
+        const url = PAYMENT_URLS[action];
+        if (url) shell.openExternal(url);
+      } else if (action === 'activate') {
+        if (!dlg.isDestroyed()) dlg.close();
+        resolve({ action: 'activate' });
+        return;
+      }
+    }
+
+    ipcMain.on('upgrade-action', onAction);
+    dlg.on('closed', () => { resolve(null); cleanup(); });
+    dlg.once('ready-to-show', () => dlg.show());
+  });
+});
+
 ipcMain.handle('get-happiness-status', () => {
   return happiness.getStatus();
 });
@@ -357,6 +414,19 @@ ipcMain.handle('set-pet-name', (_, name) => {
   happiness.setPetName(name);
   ctx.notifyRenderer('happiness-change', happiness.getStatus());
   return { success: true, name: happiness.getPetName() };
+});
+
+ipcMain.handle('validate-online', async () => {
+  return await license.validateOnline();
+});
+
+ipcMain.handle('deactivate-license', async () => {
+  const result = await license.deactivateLicense();
+  if (result.success) {
+    ctx.notifyRenderer('license-change', { tier: 'free' });
+    trayManager.updateTrayMenu(ctx);
+  }
+  return result;
 });
 
 app.whenReady().then(() => {

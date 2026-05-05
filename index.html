@@ -248,81 +248,6 @@ body {
   display: inline;
 }
 
-/* ===================== Upgrade Prompt ===================== */
-#upgrade-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  z-index: 998;
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-
-#upgrade-overlay.visible {
-  display: flex;
-}
-
-.upgrade-card {
-  background: white;
-  border-radius: 20px;
-  padding: 24px;
-  width: 260px;
-  text-align: center;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-}
-
-.upgrade-card h3 {
-  color: #FF1493;
-  margin-bottom: 8px;
-  font-size: 18px;
-}
-
-.upgrade-card p {
-  color: #666;
-  font-size: 13px;
-  line-height: 1.5;
-  margin-bottom: 16px;
-}
-
-.upgrade-feature {
-  text-align: left;
-  font-size: 12px;
-  color: #444;
-  padding: 4px 0;
-}
-
-.upgrade-feature::before {
-  content: '⭐ ';
-}
-
-.upgrade-btn {
-  background: linear-gradient(135deg, #FF69B4, #FF1493);
-  color: white;
-  border: none;
-  padding: 10px 28px;
-  border-radius: 20px;
-  font-size: 14px;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(255, 20, 147, 0.4);
-  margin-top: 8px;
-}
-
-.upgrade-btn:hover {
-  transform: scale(1.05);
-}
-
-.upgrade-dismiss {
-  background: none;
-  border: none;
-  color: #999;
-  font-size: 12px;
-  cursor: pointer;
-  margin-top: 10px;
-}
 </style>
 </head>
 <body>
@@ -355,20 +280,6 @@ body {
 <!-- 暂停遮罩 -->
 <div id="pause-overlay">
   <div class="pause-text">⏸ 已暂停</div>
-</div>
-
-<!-- 升级提示遮罩 -->
-<div id="upgrade-overlay">
-  <div class="upgrade-card">
-    <h3>⭐ 升级到 Pro</h3>
-    <p>解锁全部功能，让你的宠物更可爱！</p>
-    <div class="upgrade-feature">自定义宠物照片</div>
-    <div class="upgrade-feature">给宠物起名字</div>
-    <div class="upgrade-feature">心情追踪系统</div>
-    <div class="upgrade-feature">更多宠物主题</div>
-    <button class="upgrade-btn" onclick="handleUpgrade()">立即升级</button>
-    <button class="upgrade-dismiss" onclick="dismissUpgrade()">以后再说</button>
-  </div>
 </div>
 
 <!-- 遮罩开关 -->
@@ -404,7 +315,6 @@ const overlayToggle = document.getElementById('overlay-toggle');
 const happinessBar = document.getElementById('happiness-bar');
 const petNameDisplay = document.getElementById('pet-name-display');
 const moodEmoji = document.getElementById('mood-emoji');
-const upgradeOverlay = document.getElementById('upgrade-overlay');
 
 // ===================== 初始化 =====================
 function applyConfig(config) {
@@ -700,20 +610,15 @@ function handleLicenseInfo(lic) {
   console.log('[EyePet] Tier:', lic.tier, '| Trial:', lic.trialInfo?.daysRemaining + 'd');
 }
 
-function showUpgradePrompt(feature) {
-  if (upgradeOverlay) {
-    upgradeOverlay.classList.add('visible');
+async function showUpgradePrompt(feature) {
+  if (!window.eyePet || !window.eyePet.showUpgradeDialog) return;
+  const result = await window.eyePet.showUpgradeDialog();
+  if (result && result.action === 'activate') {
+    await handleActivate();
   }
 }
 
-function dismissUpgrade() {
-  if (upgradeOverlay) {
-    upgradeOverlay.classList.remove('visible');
-  }
-}
-
-async function handleUpgrade() {
-  dismissUpgrade();
+async function handleActivate() {
   if (!window.eyePet || !window.eyePet.showLicenseDialog) return;
   const key = await window.eyePet.showLicenseDialog();
   if (!key) return;

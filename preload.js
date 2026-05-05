@@ -42,6 +42,10 @@ contextBridge.exposeInMainWorld('eyePet', {
   getHappinessStatus: () => ipcRenderer.invoke('get-happiness-status'),
   setPetName: (name) => ipcRenderer.invoke('set-pet-name', name),
   showLicenseDialog: () => ipcRenderer.invoke('show-license-dialog'),
+  showUpgradeDialog: () => ipcRenderer.invoke('show-upgrade-dialog'),
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  validateOnline: () => ipcRenderer.invoke('validate-online'),
+  deactivateLicense: () => ipcRenderer.invoke('deactivate-license'),
   onHappinessChange: (callback) => {
     ipcRenderer.on('happiness-change', (event, data) => callback(data));
   },
