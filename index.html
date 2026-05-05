@@ -241,6 +241,11 @@ body {
 #mood-emoji {
   font-size: 16px;
   margin-left: 2px;
+  display: none;
+}
+
+#mood-emoji.visible {
+  display: inline;
 }
 
 /* ===================== Upgrade Prompt ===================== */
@@ -455,13 +460,16 @@ async function init() {
       });
     }
 
-    if (window.eyePet.getHappinessStatus) {
-      const happy = await window.eyePet.getHappinessStatus();
-      updateHappinessUI(happy);
+    if (window.eyePet.getHappinessStatus && window.eyePet.checkFeature) {
+      const result = await window.eyePet.checkFeature('pet-happiness');
+      if (result && result.available) {
+        const happy = await window.eyePet.getHappinessStatus();
+        await updateHappinessUI(happy);
 
-      window.eyePet.onHappinessChange((data) => {
-        updateHappinessUI(data);
-      });
+        window.eyePet.onHappinessChange((data) => {
+          updateHappinessUI(data);
+        });
+      }
     }
   }
   
@@ -641,8 +649,11 @@ function showBubble(text, duration = 3000) {
 }
 
 // ===================== Happiness UI =====================
-function updateHappinessUI(data) {
+async function updateHappinessUI(data) {
   if (!data) return;
+
+  const result = window.eyePet ? await window.eyePet.checkFeature('pet-happiness') : null;
+  if (!result || !result.available) return;
 
   const level = data.happiness || 50;
   const hearts = Math.ceil(level / 10);
@@ -662,7 +673,10 @@ function updateHappinessUI(data) {
   happinessBar.innerHTML = html;
   happinessBar.classList.add('visible');
 
-  if (moodEmoji) moodEmoji.textContent = data.emoji || '😊';
+  if (moodEmoji) {
+    moodEmoji.textContent = data.emoji || '😊';
+    moodEmoji.classList.add('visible');
+  }
 
   if (data.petName && petNameDisplay) {
     petNameDisplay.textContent = data.petName;
