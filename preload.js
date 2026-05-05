@@ -1,56 +1,52 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('eyePet', {
-  // 获取当前状态
   getState: () => ipcRenderer.invoke('get-state'),
-
-  // 开始护眼周期
   startCycle: () => ipcRenderer.invoke('start-cycle'),
-
-  // 暂停
   pauseCycle: () => ipcRenderer.invoke('pause-cycle'),
-
-  // 继续
   resumeCycle: () => ipcRenderer.invoke('resume-cycle'),
-
-  // 切换遮罩
   toggleOverlay: () => ipcRenderer.invoke('toggle-overlay'),
-
-  // 退出应用
   quitApp: () => ipcRenderer.invoke('quit-app'),
-
-  // 窗口拖动
   startDrag: (x, y) => ipcRenderer.send('start-drag', { x, y }),
   drag: (x, y) => ipcRenderer.send('drag', { x, y }),
   endDrag: () => ipcRenderer.send('end-drag'),
-
-  // 监听状态变化
   onStateChange: (callback) => {
     ipcRenderer.on('state-change', (event, data) => callback(data));
   },
-
-  // 监听进度更新
   onProgressUpdate: (callback) => {
     ipcRenderer.on('progress-update', (event, data) => callback(data));
   },
-
-  // 监听遮罩开关变化
   onOverlayToggle: (callback) => {
     ipcRenderer.on('overlay-toggle', (event, enabled) => callback(enabled));
   },
-
-  // 获取用户配置
   getConfig: () => ipcRenderer.invoke('get-config'),
-
-  // 个性化设置
   pickAppImage: () => ipcRenderer.invoke('pick-app-image'),
   pickSleepImage: () => ipcRenderer.invoke('pick-sleep-image'),
   pickRestImage: () => ipcRenderer.invoke('pick-rest-image'),
   pickIconImage: () => ipcRenderer.invoke('pick-icon-image'),
   setGreetingText: () => ipcRenderer.invoke('set-greeting-text'),
-
-  // 监听配置变化
   onConfigChange: (callback) => {
     ipcRenderer.on('config-change', (event, data) => callback(data));
+  },
+
+  getLicenseInfo: () => ipcRenderer.invoke('get-license-info'),
+  activateLicense: (key) => ipcRenderer.invoke('activate-license', key),
+  checkFeature: (featureName) => ipcRenderer.invoke('check-feature', featureName),
+  onLicenseChange: (callback) => {
+    ipcRenderer.on('license-change', (event, data) => callback(data));
+  },
+  onUpgradePrompt: (callback) => {
+    ipcRenderer.on('upgrade-prompt', (event, data) => callback(data));
+  },
+
+  getHappinessStatus: () => ipcRenderer.invoke('get-happiness-status'),
+  setPetName: (name) => ipcRenderer.invoke('set-pet-name', name),
+  showLicenseDialog: () => ipcRenderer.invoke('show-license-dialog'),
+  showUpgradeDialog: () => ipcRenderer.invoke('show-upgrade-dialog'),
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  validateOnline: () => ipcRenderer.invoke('validate-online'),
+  deactivateLicense: () => ipcRenderer.invoke('deactivate-license'),
+  onHappinessChange: (callback) => {
+    ipcRenderer.on('happiness-change', (event, data) => callback(data));
   },
 });

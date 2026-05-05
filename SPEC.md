@@ -183,7 +183,7 @@ eye-pet/
 │   └── index.html           ← Netlify 落地页
 ├── assets/
 │   ├── angel.png            ← 默认宠物（睡觉）
-│   ├── angel——wakeup.png   ← 默认宠物（休息提醒）
+│   ├── angel-wakeup.png   ← 默认宠物（休息提醒）
 │   └── icon.png             ← 托盘图标
 ├── build/                   ← 图标资源和打包配置
 └── scripts/

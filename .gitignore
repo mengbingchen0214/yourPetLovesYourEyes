@@ -1,7 +1,10 @@
 node_modules/
 dist/
+*.dmg
 *.log
 .DS_Store
 .claude/
 __pycache__/
 *.pyc
+userData/
+.env

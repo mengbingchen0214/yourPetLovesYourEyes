@@ -186,6 +186,68 @@ body {
   color: white;
   text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
+
+/* ===================== Happiness Meter ===================== */
+#happiness-bar {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255,255,255,0.9);
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+}
+
+#happiness-bar.visible {
+  display: flex;
+}
+
+.heart {
+  color: #ddd;
+  transition: color 0.3s;
+}
+
+.heart.filled {
+  color: #FF69B4;
+}
+
+.heart-half {
+  color: #FF69B4;
+  opacity: 0.5;
+}
+
+#pet-name-display {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  background: rgba(255,255,255,0.85);
+  padding: 2px 10px;
+  border-radius: 10px;
+  display: none;
+}
+
+#pet-name-display.visible {
+  display: block;
+}
+
+#mood-emoji {
+  font-size: 16px;
+  margin-left: 2px;
+  display: none;
+}
+
+#mood-emoji.visible {
+  display: inline;
+}
+
 </style>
 </head>
 <body>
@@ -203,7 +265,10 @@ body {
   
   <!-- 宠物主体 -->
   <div class="pet" id="pet">
+    <div id="pet-name-display"></div>
     <img id="pet-sprite" src="assets/angel.png" alt="护眼宠物">
+    <span id="mood-emoji"></span>
+    <div id="happiness-bar"></div>
   </div>
 
 
@@ -231,7 +296,7 @@ let sleepCountdown = null;
 let overlayEnabled = true;
 let lastActiveState = 'sleeping';
 let SLEEP_IMAGE = 'assets/angel.png';
-let WAKE_IMAGE = 'assets/angel——wakeup.png';
+let WAKE_IMAGE = 'assets/angel-wakeup.png';
 
 // ===================== DOM 元素 =====================
 const petContainer = document.getElementById('pet-container');
@@ -247,6 +312,9 @@ const restScreen = document.getElementById('rest-screen');
 const restTimer = document.getElementById('rest-timer');
 const pauseOverlay = document.getElementById('pause-overlay');
 const overlayToggle = document.getElementById('overlay-toggle');
+const happinessBar = document.getElementById('happiness-bar');
+const petNameDisplay = document.getElementById('pet-name-display');
+const moodEmoji = document.getElementById('mood-emoji');
 
 // ===================== 初始化 =====================
 function applyConfig(config) {
@@ -288,6 +356,31 @@ async function init() {
     window.eyePet.onConfigChange((data) => {
       applyConfig(data);
     });
+
+    if (window.eyePet.getLicenseInfo) {
+      const lic = await window.eyePet.getLicenseInfo();
+      handleLicenseInfo(lic);
+
+      window.eyePet.onLicenseChange((data) => {
+        console.log('[EyePet] License changed:', data);
+      });
+
+      window.eyePet.onUpgradePrompt((data) => {
+        showUpgradePrompt(data.feature);
+      });
+    }
+
+    if (window.eyePet.getHappinessStatus && window.eyePet.checkFeature) {
+      const result = await window.eyePet.checkFeature('pet-happiness');
+      if (result && result.available) {
+        const happy = await window.eyePet.getHappinessStatus();
+        await updateHappinessUI(happy);
+
+        window.eyePet.onHappinessChange((data) => {
+          updateHappinessUI(data);
+        });
+      }
+    }
   }
   
   // 双击提示
@@ -463,6 +556,83 @@ function showBubble(text, duration = 3000) {
   setTimeout(() => {
     speechBubble.classList.remove('show');
   }, duration);
+}
+
+// ===================== Happiness UI =====================
+async function updateHappinessUI(data) {
+  if (!data) return;
+
+  const result = window.eyePet ? await window.eyePet.checkFeature('pet-happiness') : null;
+  if (!result || !result.available) return;
+
+  const level = data.happiness || 50;
+  const hearts = Math.ceil(level / 10);
+  const fullHearts = Math.floor(hearts);
+  const hasHalf = hearts % 1 >= 0.5;
+
+  let html = '';
+  for (let i = 0; i < 10; i++) {
+    if (i < fullHearts) {
+      html += '<span class="heart filled">♥</span>';
+    } else if (i === fullHearts && hasHalf) {
+      html += '<span class="heart half">♥</span>';
+    } else {
+      html += '<span class="heart">♥</span>';
+    }
+  }
+  happinessBar.innerHTML = html;
+  happinessBar.classList.add('visible');
+
+  if (moodEmoji) {
+    moodEmoji.textContent = data.emoji || '😊';
+    moodEmoji.classList.add('visible');
+  }
+
+  if (data.petName && petNameDisplay) {
+    petNameDisplay.textContent = data.petName;
+    petNameDisplay.classList.add('visible');
+  }
+
+  const moodTexts = {
+    sad: '我想你...多看看我吧 😢',
+    neutral: '我还好，记得休息哦 😐',
+    happy: '今天很开心！😊',
+    'very-happy': '太棒了！继续加油！😄',
+    ecstatic: '我最爱你了！🥰'
+  };
+  if (data.mood && currentState !== 'greeting') {
+    showBubble(moodTexts[data.mood] || '', 4000);
+  }
+}
+
+// ===================== License / Upgrade UI =====================
+function handleLicenseInfo(lic) {
+  console.log('[EyePet] Tier:', lic.tier, '| Trial:', lic.trialInfo?.daysRemaining + 'd');
+}
+
+async function showUpgradePrompt(feature) {
+  if (!window.eyePet || !window.eyePet.showUpgradeDialog) return;
+  const result = await window.eyePet.showUpgradeDialog();
+  if (result && result.action === 'activate') {
+    await handleActivate();
+  }
+}
+
+async function handleActivate() {
+  if (!window.eyePet || !window.eyePet.showLicenseDialog) return;
+  const key = await window.eyePet.showLicenseDialog();
+  if (!key) return;
+
+  if (window.eyePet && window.eyePet.activateLicense) {
+    const result = await window.eyePet.activateLicense(key);
+    if (result.success) {
+      showBubble('🎉 激活成功！欢迎成为 Pro 用户！');
+      const lic = await window.eyePet.getLicenseInfo();
+      handleLicenseInfo(lic);
+    } else {
+      showBubble('❌ 激活失败：' + (result.error || '无效的激活码'));
+    }
+  }
 }
 
 // ===================== 启动 =====================

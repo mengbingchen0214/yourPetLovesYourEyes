@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>升级到 Pro - EyePet</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .upgrade-card {
+    background: white;
+    border-radius: 20px;
+    padding: 28px 24px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  }
+
+  .upgrade-card h3 {
+    color: #FF1493;
+    margin-bottom: 6px;
+    font-size: 18px;
+  }
+
+  .upgrade-card p {
+    color: #666;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .upgrade-price {
+    font-size: 28px;
+    font-weight: 700;
+    color: #FF1493;
+    margin: 4px 0 2px;
+  }
+
+  .upgrade-price .currency {
+    font-size: 16px;
+    vertical-align: super;
+  }
+
+  .upgrade-price-original {
+    font-size: 12px;
+    color: #ccc;
+    text-decoration: line-through;
+    margin-bottom: 10px;
+  }
+
+  .upgrade-feature {
+    text-align: left;
+    font-size: 12px;
+    color: #444;
+    padding: 3px 0;
+  }
+
+  .upgrade-feature::before { content: '⭐ '; }
+
+  .buy-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 10px 0;
+  }
+
+  .buy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 9px 18px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.15s;
+  }
+  .buy-btn:hover { transform: scale(1.04); }
+
+  .buy-btn-alipay { background: linear-gradient(135deg, #1677FF, #0958d9); color: white; }
+  .buy-btn-wechat { background: linear-gradient(135deg, #07C160, #06AD56); color: white; }
+  .buy-btn-intl { background: linear-gradient(135deg, #546E7A, #37474F); color: white; }
+
+  .activate-btn {
+    background: linear-gradient(135deg, #FF69B4, #FF1493);
+    color: white;
+    border: none;
+    padding: 9px 24px;
+    border-radius: 16px;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(255,20,147,0.35);
+    margin-top: 4px;
+  }
+  .activate-btn:hover { transform: scale(1.04); }
+
+  .upgrade-note {
+    font-size: 11px;
+    color: #999;
+    line-height: 1.45;
+    margin-top: 8px;
+  }
+
+  .dismiss-btn {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 8px;
+    padding: 4px;
+  }
+  .dismiss-btn:hover { color: #666; }
+</style>
+</head>
+<body>
+<div class="upgrade-card">
+  <h3>⭐ 升级到 Pro</h3>
+  <p>解锁全部功能，让你的宠物更可爱！</p>
+  <div class="upgrade-price"><span class="currency">¥</span>2.88 <span class="upgrade-price-original">原价 ¥29</span></div>
+  <div class="upgrade-feature">自定义宠物照片</div>
+  <div class="upgrade-feature">给宠物起名字</div>
+  <div class="upgrade-feature">心情追踪系统 ❤️</div>
+  <div class="upgrade-feature">更多宠物主题</div>
+  <div class="buy-buttons">
+    <button class="buy-btn buy-btn-alipay" id="btn-alipay">💰 支付宝 ¥2.88</button>
+    <button class="buy-btn buy-btn-wechat" id="btn-wechat">🟢 微信支付 ¥2.88</button>
+    <button class="buy-btn buy-btn-intl" id="btn-intl">🌍 PayPal $0.99</button>
+  </div>
+  <button class="activate-btn" id="btn-activate">已有激活码？输入激活</button>
+  <div class="upgrade-note">
+    购买后激活码将发送至您的邮箱<br>
+    如未收到，请检查垃圾邮件或联系客服
+  </div>
+  <button class="dismiss-btn" id="btn-dismiss">下次再说</button>
+</div>
+
+<script>
+document.getElementById('btn-alipay').addEventListener('click', () => {
+  window.dialog && window.dialog.sendUpgradeAction && window.dialog.sendUpgradeAction('buy-alipay');
+});
+document.getElementById('btn-wechat').addEventListener('click', () => {
+  window.dialog && window.dialog.sendUpgradeAction && window.dialog.sendUpgradeAction('buy-wechat');
+});
+document.getElementById('btn-intl').addEventListener('click', () => {
+  window.dialog && window.dialog.sendUpgradeAction && window.dialog.sendUpgradeAction('buy-intl');
+});
+document.getElementById('btn-activate').addEventListener('click', () => {
+  window.dialog && window.dialog.sendUpgradeAction && window.dialog.sendUpgradeAction('activate');
+});
+document.getElementById('btn-dismiss').addEventListener('click', () => {
+  window.close();
+});
+</script>
+</body>
+</html>
