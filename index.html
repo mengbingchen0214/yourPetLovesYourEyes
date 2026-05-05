@@ -700,7 +700,8 @@ function dismissUpgrade() {
 
 async function handleUpgrade() {
   dismissUpgrade();
-  const key = prompt('请输入 Pro 激活码：');
+  if (!window.eyePet || !window.eyePet.showLicenseDialog) return;
+  const key = await window.eyePet.showLicenseDialog();
   if (!key) return;
 
   if (window.eyePet && window.eyePet.activateLicense) {

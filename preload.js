@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('eyePet', {
 
   getHappinessStatus: () => ipcRenderer.invoke('get-happiness-status'),
   setPetName: (name) => ipcRenderer.invoke('set-pet-name', name),
+  showLicenseDialog: () => ipcRenderer.invoke('show-license-dialog'),
   onHappinessChange: (callback) => {
     ipcRenderer.on('happiness-change', (event, data) => callback(data));
   },

@@ -314,6 +314,38 @@ ipcMain.handle('check-feature', (_, featureName) => {
   return { available: license.isFeatureAvailable(featureName) };
 });
 
+ipcMain.handle('show-license-dialog', () => {
+  if (win) { win.show(); win.focus(); }
+  return new Promise((resolve) => {
+    const dlg = new BrowserWindow({
+      width: 360, height: 140,
+      title: '激活 Pro',
+      resizable: false, minimizable: false, maximizable: false,
+      modal: false,
+      webPreferences: {
+        preload: path.join(__dirname, 'dialog-preload.js'),
+        contextIsolation: true, nodeIntegration: false,
+      }
+    });
+    dlg.setMenuBarVisibility(false);
+    dlg.loadFile('input-dialog.html');
+    dlg.once('ready-to-show', () => {
+      dlg.show();
+      dlg.webContents.send('text-input-init', { value: '', placeholder: 'xxxx-xxxx-xxxx-xxxx' });
+    });
+    function cleanup() {
+      ipcMain.removeListener('text-input-result', onResult);
+      ipcMain.removeListener('text-input-cancel', onCancel);
+      if (!dlg.isDestroyed()) dlg.close();
+    }
+    function onResult(_, value) { resolve(value || null); cleanup(); }
+    function onCancel() { resolve(null); cleanup(); }
+    ipcMain.once('text-input-result', onResult);
+    ipcMain.once('text-input-cancel', onCancel);
+    dlg.on('closed', () => resolve(null));
+  });
+});
+
 ipcMain.handle('get-happiness-status', () => {
   return happiness.getStatus();
 });
@@ -328,6 +360,7 @@ ipcMain.handle('set-pet-name', (_, name) => {
 });
 
 app.whenReady().then(() => {
+  app.setName('EyePet');
   userConfig = loadConfig();
   license.setConfigPath(app.getPath('userData'));
   license.initTrial();
