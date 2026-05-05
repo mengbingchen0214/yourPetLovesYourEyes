@@ -329,7 +329,9 @@ ipcMain.handle('set-pet-name', (_, name) => {
 
 app.whenReady().then(() => {
   userConfig = loadConfig();
+  license.setConfigPath(app.getPath('userData'));
   license.initTrial();
+  happiness.setConfigPath(app.getPath('userData'));
   if (userConfig.savedPosition) {
     ctx.savedPosition = userConfig.savedPosition;
   }
