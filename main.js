@@ -7,6 +7,8 @@ const { STATE, MIME_TYPES } = require('./lib/constants');
 const overlayManager = require('./lib/overlay-manager');
 const trayManager = require('./lib/tray-manager');
 const stateMachine = require('./lib/state-machine');
+const license = require('./lib/license');
+const happiness = require('./lib/happiness');
 
 let userConfig = {};
 let win = null;
@@ -127,11 +129,19 @@ async function pickImageFor(configKey, title) {
 }
 
 async function _pickSleepImage() {
+  if (!license.isFeatureAvailable('custom-pet')) {
+    ctx.notifyRenderer('upgrade-prompt', { feature: 'custom-pet' });
+    return;
+  }
   const imagePath = await pickImageFor('sleepImage', '选择睡觉图片（20分钟）');
   if (imagePath) ctx.notifyRenderer('config-change', { sleepImage: imagePath });
 }
 
 async function _pickRestImage() {
+  if (!license.isFeatureAvailable('custom-pet')) {
+    ctx.notifyRenderer('upgrade-prompt', { feature: 'custom-pet' });
+    return;
+  }
   const imagePath = await pickImageFor('restImage', '选择休息图片（20秒）');
   if (imagePath) ctx.notifyRenderer('config-change', { restImage: imagePath });
 }
@@ -276,8 +286,50 @@ ipcMain.handle('pick-tray-icon', () => _pickTrayIcon());
 ipcMain.handle('pick-app-icon', () => _pickAppIcon());
 ipcMain.handle('set-greeting-text', () => _setGreetingText());
 
+ipcMain.handle('get-license-info', () => {
+  const tier = license.getTier();
+  return {
+    tier,
+    isPro: tier === license.TIER.PRO,
+    isTrial: tier === license.TIER.TRIAL,
+    isFree: tier === license.TIER.FREE,
+    trialInfo: license.getTrialInfo(),
+    proFeatures: license.PRO_FEATURES.map(f => ({
+      name: f,
+      available: license.isFeatureAvailable(f)
+    }))
+  };
+});
+
+ipcMain.handle('activate-license', (_, key) => {
+  const result = license.activateLicense(key);
+  if (result.success) {
+    ctx.notifyRenderer('license-change', { tier: result.tier });
+    trayManager.updateTrayMenu(ctx);
+  }
+  return result;
+});
+
+ipcMain.handle('check-feature', (_, featureName) => {
+  return { available: license.isFeatureAvailable(featureName) };
+});
+
+ipcMain.handle('get-happiness-status', () => {
+  return happiness.getStatus();
+});
+
+ipcMain.handle('set-pet-name', (_, name) => {
+  if (!license.isFeatureAvailable('pet-name')) {
+    return { success: false, error: 'Pro feature' };
+  }
+  happiness.setPetName(name);
+  ctx.notifyRenderer('happiness-change', happiness.getStatus());
+  return { success: true, name: happiness.getPetName() };
+});
+
 app.whenReady().then(() => {
   userConfig = loadConfig();
+  license.initTrial();
   if (userConfig.savedPosition) {
     ctx.savedPosition = userConfig.savedPosition;
   }
@@ -287,6 +339,21 @@ app.whenReady().then(() => {
 
   sm = stateMachine.create(ctx);
   sm.startGreeting();
+
+  ipcMain.on('state-change', (_, data) => {
+    switch (data.state) {
+      case 'sleeping':
+        happiness.addEvent('cycle-started');
+        break;
+      case 'resting':
+        happiness.addEvent('rest-completed');
+        break;
+      case 'paused':
+        happiness.addEvent('paused');
+        break;
+    }
+    ctx.notifyRenderer('happiness-change', happiness.getStatus());
+  });
 
   globalShortcut.register('CommandOrControl+Shift+E', () => {
     if (win) {
