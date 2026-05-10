@@ -14,14 +14,19 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Install pnpm
-        run: corepack enable && pnpm install
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Build macOS app
         run: pnpm run build:mac
@@ -44,14 +49,19 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Install pnpm
-        run: corepack enable && pnpm install
+      - name: Install dependencies
+        run: pnpm install
         shell: bash
 
       - name: Build Windows app
@@ -73,6 +83,7 @@ jobs:
     name: Create Release
     needs: [build-mac, build-windows]
     runs-on: ubuntu-latest
+    if: success()
     steps:
       - name: Download Mac builds
         uses: actions/download-artifact@v4
@@ -87,10 +98,11 @@ jobs:
           path: release/
 
       - name: List files
-        run: ls -lh release/
+        run: ls -lh release/ || echo "No release files found"
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
+        if: success()
         with:
           files: release/*
           draft: false
