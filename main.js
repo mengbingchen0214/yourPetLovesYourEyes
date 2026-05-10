@@ -2,6 +2,8 @@ const { app, BrowserWindow, globalShortcut, screen, dialog, ipcMain, shell } = r
 const path = require('path');
 const fs = require('fs');
 
+app.commandLine.appendSwitch('no-sandbox');
+
 const { loadConfig, saveConfig } = require('./lib/config');
 const { STATE, MIME_TYPES } = require('./lib/constants');
 const overlayManager = require('./lib/overlay-manager');
@@ -87,6 +89,8 @@ function createWindow() {
   } else {
     win.loadFile('index.html');
   }
+
+  win.webContents.openDevTools({ mode: 'detach' });
 
   win.on('closed', () => {
     win = null;
@@ -361,17 +365,35 @@ ipcMain.handle('pick-app-icon', () => _pickAppIcon());
 ipcMain.handle('set-greeting-text', () => _setGreetingText());
 
 app.whenReady().then(() => {
+  console.log('[EyePet DEBUG] App ready, starting initialization...');
   app.setName('EyePet');
   userConfig = loadConfig();
+  console.log('[EyePet DEBUG] Config loaded:', JSON.stringify(userConfig).substring(0, 200));
   if (userConfig.savedPosition) {
     ctx.savedPosition = userConfig.savedPosition;
   }
-  if (app.dock) app.dock.setIcon(path.join(__dirname, 'build', 'angelicon.PNG'));
+  
+  const dockIconPath = path.join(__dirname, 'assets', 'angelicon.PNG');
+  console.log('[EyePet DEBUG] Dock icon path:', dockIconPath);
+  console.log('[EyePet DEBUG] Dock icon exists:', fs.existsSync(dockIconPath));
+  if (app.dock) {
+    try {
+      app.dock.setIcon(dockIconPath);
+      console.log('[EyePet DEBUG] Dock icon set successfully');
+    } catch (err) {
+      console.error('[EyePet DEBUG] Failed to set dock icon:', err.message);
+    }
+  }
+  
   createWindow();
+  console.log('[EyePet DEBUG] Window created');
+  
   trayManager.createTray(ctx);
+  console.log('[EyePet DEBUG] Tray created');
 
   sm = stateMachine.create(ctx);
   sm.startGreeting();
+  console.log('[EyePet DEBUG] State machine started with greeting');
 
   globalShortcut.register('CommandOrControl+Shift+E', () => {
     if (win) {
