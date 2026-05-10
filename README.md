@@ -1,23 +1,23 @@
-# 护眼Pet 🐾
+# EyePet 🐾
 
-> 一只住在你 Mac 桌面上的小宠物，每 20 分钟提醒你望远护眼。
-
----
-
-## 功能
-
-- **护眼提醒**：遵循 20-20-20 法则——每 20 分钟触发一次，全屏遮罩提示你望向 20 米外 20 秒
-- **桌面常驻**：无边框透明窗口，始终置顶，可随意拖动位置
-- **宠物动画**：睡觉时轻微浮动，休息提醒时点头动画
-- **个性化**：自定义宠物图片（睡觉/休息两张）、顶栏图标、App 图标、问候语
-- **系统托盘**：实时倒计时显示，暂停/继续、显示/隐藏宠物
-- **多显示器**：休息遮罩覆盖所有连接的显示器
+> A desktop pet that reminds you to rest your eyes every 20 minutes.
 
 ---
 
-## 安装
+## Features
 
-### 开发模式运行
+- **Eye Care Reminder**: Follows the 20-20-20 rule — triggers every 20 minutes with full-screen overlay prompting you to look 20 feet away for 20 seconds
+- **Desktop Resident**: Borderless transparent window, always on top, freely draggable
+- **Pet Animation**: Gentle floating animation while sleeping, nodding during rest reminders
+- **Customizable**: Custom pet images (sleeping/rest states), tray icon, app icon, greeting text
+- **System Tray**: Real-time countdown display, pause/resume, show/hide pet
+- **Multi-Monitor**: Rest overlay covers all connected displays
+
+---
+
+## Installation
+
+### Development Mode
 
 ```bash
 npm install
@@ -26,92 +26,92 @@ npm run dev
 
 ---
 
-## 使用说明
+## Usage
 
-| 操作 | 效果 |
+| Action | Effect |
 |---|---|
-| 点击「开始护眼」 | 启动 20 分钟倒计时 |
-| 拖动宠物 | 移动到任意位置 |
-| `Cmd+Shift+E` | 显示 / 隐藏宠物窗口 |
-| 右键托盘图标 | 暂停、个性化设置、支持开发者、退出 |
+| Click "Start Eye Protection" | Start 20-minute countdown |
+| Drag pet | Move anywhere on screen |
+| `Cmd+Shift+E` | Show / hide pet window |
+| Right-click tray icon | Pause, customize settings, support developer, quit |
 
-### 个性化（右键托盘 → 个性化）
+### Personalization (Right-click Tray → Personalize)
 
-- **更换20分钟宠物照**：主人工作状态显示的图片
-- **更换20秒宠物照**：主人休息提醒时显示的图片
-- **更换顶部图标**：菜单栏图标
-- **更换App图标**：Dock 图标
-- **修改问候语**：首次启动的欢迎语
-
----
-
-## 支持开发者
-
-如果您喜欢这个应用，可以通过支付宝扫码支持开发者继续维护和更新：
-
-- 右键托盘图标 → **☕ 支持开发者**
-- 建议金额：¥2.88
-- 无需注册或激活码，扫码即可支持
-
-感谢您的支持！❤️
+- **Change 20-min Pet Photo**: Image displayed during work state
+- **Change 20-sec Pet Photo**: Image displayed during rest reminder
+- **Change Tray Icon**: Menu bar icon
+- **Change App Icon**: Dock icon
+- **Modify Greeting Text**: Welcome message on first launch
 
 ---
 
-## 文件结构
+## Support Developer
+
+If you enjoy this app, you can support the developer via Alipay:
+
+- Right-click tray icon → **☕ Support Developer**
+- Suggested amount: ¥2.88
+- No registration or activation code needed, scan to support
+
+Thank you for your support! ❤️
+
+---
+
+## File Structure
 
 ```
 eye-pet/
-├── main.js              # Electron 主进程（状态机、计时器、托盘）
-├── preload.js           # 渲染进程 IPC 桥接
-├── index.html           # 桌面宠物界面
-├── overlay.html         # 休息提醒全屏遮罩
-├── input-dialog.html    # 问候语输入弹窗
-├── dialog-preload.js    # 弹窗 IPC 桥接
-├── assets/              # 宠物图片资源
-│   ├── angel.png        # 默认宠物图片
-│   ├── angel-wakeup.png # 休息提醒图片
-│   └── donation-qrcode.jpeg # 支付宝收款码
-├── backend/             # 图片处理后端（可选，独立服务）
-│   ├── server.py        # FastAPI：去背景 + Q版化处理
+├── main.js              # Electron main process (state machine, timer, tray)
+├── preload.js           # Renderer IPC bridge
+├── index.html           # Desktop pet UI
+├── overlay.html         # Full-screen rest reminder overlay
+├── input-dialog.html    # Greeting text input dialog
+├── dialog-preload.js    # Dialog IPC bridge
+├── assets/              # Pet image assets
+│   ├── angel.png        # Default pet image
+│   ├── angel-wakeup.png # Rest reminder image
+│   └── donation-qrcode.jpeg # Alipay QR code
+├── backend/             # Image processing backend (optional, standalone service)
+│   ├── server.py        # FastAPI: background removal + Q-version processing
 │   └── requirements.txt
-├── web/                 # Netlify 落地页
+├── web/                 # Netlify landing page
 │   └── index.html
-├── build/               # 图标资源和打包配置
+├── build/               # Icon resources and build config
 └── scripts/
-    └── package.sh       # 打包脚本
+    └── package.sh       # Build script
 ```
 
 ---
 
-## 后端图片处理（可选）
+## Backend Image Processing (Optional)
 
-`backend/` 提供独立的 Python 服务，支持宠物照片去背景和 Q 版风格处理：
+`backend/` provides a standalone Python service for pet photo background removal and Q-version style processing:
 
 ```bash
 cd backend
 pip install -r requirements.txt
 python server.py
-# 启动后访问 http://localhost:8765
+# Visit http://localhost:8765 after starting
 ```
 
-接口：
-- `POST /process-qversion`：去背景 + Q 版化，返回 base64 PNG
-- `POST /remove-background`：仅去背景
+Endpoints:
+- `POST /process-qversion`: Background removal + Q-version, returns base64 PNG
+- `POST /remove-background`: Background removal only
 
 ---
 
-## 技术栈
+## Tech Stack
 
-| 层 | 技术 |
+| Layer | Technology |
 |---|---|
-| 桌面端 | Electron 41 + HTML/CSS/JS |
-| 图片处理后端 | Python + FastAPI + rembg + Pillow |
-| 落地页 | 纯 HTML，部署于 Netlify |
+| Desktop | Electron 41 + HTML/CSS/JS |
+| Image Processing Backend | Python + FastAPI + rembg + Pillow |
+| Landing Page | Pure HTML, deployed on Netlify |
 
 ---
 
-## 系统要求
+## System Requirements
 
 - macOS 12+
-- 护眼提醒功能无需联网
-- 所有功能完全免费，欢迎自愿捐赠支持开发
+- Eye care reminder works offline
+- All features completely free, voluntary donations welcome to support development
