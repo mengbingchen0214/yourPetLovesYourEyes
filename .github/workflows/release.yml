@@ -27,10 +27,16 @@ jobs:
         run: npm install -g pnpm@9
 
       - name: Install dependencies
-        run: pnpm install
+        run: |
+          for i in 1 2 3; do
+            pnpm install && break || sleep 10
+          done
 
       - name: Build macOS app
-        run: pnpm run build:mac
+        run: |
+          for i in 1 2 3; do
+            pnpm run build:mac && break || sleep 10
+          done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -61,11 +67,17 @@ jobs:
         shell: bash
 
       - name: Install dependencies
-        run: pnpm install
+        run: |
+          for i in 1 2 3; do
+            pnpm install && break || sleep 10
+          done
         shell: bash
 
       - name: Build Windows app
-        run: pnpm run build:win
+        run: |
+          for i in 1 2 3; do
+            pnpm run build:win && break || sleep 10
+          done
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
