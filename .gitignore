@@ -1,6 +1,8 @@
 node_modules/
 dist/
+release/
 *.dmg
+*.zip
 *.log
 .DS_Store
 .claude/
