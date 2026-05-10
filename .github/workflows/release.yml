@@ -1,107 +1,100 @@
-name: Release
+name: Build & Release
 
 on:
   push:
     tags:
       - 'v*'
-
-permissions:
-  contents: write
+  workflow_dispatch:
 
 jobs:
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install
-      - run: pnpm test
-
   build-mac:
     name: Build macOS
-    needs: test
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install
-      - run: pnpm build:mac
-      - uses: actions/upload-artifact@v4
-        with:
-          name: EyePet-macOS
-          path: release/*.dmg,release/*.zip,release/*.blockmap
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-  build-linux:
-    name: Build Linux
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          version: 8
-      - uses: actions/setup-node@v4
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: corepack enable && pnpm install
+
+      - name: Build macOS app
+        run: pnpm run build:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          node-version: 20
-          cache: pnpm
-      - run: |
-          sudo apt-get update
-          sudo apt-get install -y rpm libsecret-1-0 libgtk-3-dev
-      - run: pnpm install
-      - run: pnpm build:linux
-      - uses: actions/upload-artifact@v4
-        with:
-          name: EyePet-Linux
-          path: release/*.AppImage,release/*.deb,release/*.rpm
+          name: mac-builds
+          path: |
+            release/*.dmg
+            release/*.zip
+          retention-days: 7
 
   build-windows:
     name: Build Windows
-    needs: test
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          version: 8
-      - uses: actions/setup-node@v4
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: corepack enable && pnpm install
+        shell: bash
+
+      - name: Build Windows app
+        run: pnpm run build:win
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install
-      - run: pnpm build:win
-      - uses: actions/upload-artifact@v4
-        with:
-          name: EyePet-Windows
-          path: release/*.exe,release/*.portable.exe
+          name: windows-builds
+          path: |
+            release/*.exe
+            release/*.zip
+          retention-days: 7
 
   release:
-    name: Create GitHub Release
-    needs: [build-mac, build-linux, build-windows]
+    name: Create Release
+    needs: [build-mac, build-windows]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - name: Download Mac builds
+        uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          merge-multiple: true
+          name: mac-builds
+          path: release/
+
+      - name: Download Windows builds
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-builds
+          path: release/
+
+      - name: List files
+        run: ls -lh release/
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/*
+          files: release/*
+          draft: false
+          prerelease: false
           generate_release_notes: true
-          draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
