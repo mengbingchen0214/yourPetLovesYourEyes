@@ -47,6 +47,8 @@ jobs:
           path: |
             release/*.dmg
             release/*.zip
+            release/*.blockmap
+            release/latest-mac.yml
           retention-days: 7
 
   build-windows:
@@ -89,11 +91,55 @@ jobs:
           path: |
             release/*.exe
             release/*.zip
+            release/*.blockmap
+            release/latest.yml
+          retention-days: 7
+
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install pnpm globally
+        run: npm install -g pnpm@9
+
+      - name: Install dependencies
+        run: |
+          for i in 1 2 3; do
+            pnpm install && break || sleep 10
+          done
+
+      - name: Build Linux app
+        run: |
+          for i in 1 2 3; do
+            pnpm run build:linux && break || sleep 10
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-builds
+          path: |
+            release/*.AppImage
+            release/*.deb
+            release/*.rpm
+            release/*.blockmap
+            release/latest-linux.yml
           retention-days: 7
 
   release:
     name: Create Release
-    needs: [build-mac, build-windows]
+    needs: [build-mac, build-windows, build-linux]
     runs-on: ubuntu-latest
     if: success()
     steps:
@@ -107,6 +153,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: windows-builds
+          path: release/
+
+      - name: Download Linux builds
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-builds
           path: release/
 
       - name: List files
