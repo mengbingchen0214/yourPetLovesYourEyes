@@ -7,8 +7,6 @@ const { STATE, MIME_TYPES } = require('./lib/constants');
 const overlayManager = require('./lib/overlay-manager');
 const trayManager = require('./lib/tray-manager');
 const stateMachine = require('./lib/state-machine');
-const license = require('./lib/license');
-const happiness = require('./lib/happiness');
 
 let userConfig = {};
 let win = null;
@@ -46,7 +44,8 @@ const ctx = {
   pickAppIcon: () => _pickAppIcon(),
   setGreetingText: () => _setGreetingText(),
   pauseCycle: () => sm && sm.pauseCycle(),
-  resumeCycle: () => sm && sm.resumeCycle()
+  resumeCycle: () => sm && sm.resumeCycle(),
+  showDonation: () => showDonationDialog()
 };
 
 function getRandomPosition() {
@@ -129,19 +128,11 @@ async function pickImageFor(configKey, title) {
 }
 
 async function _pickSleepImage() {
-  if (!license.isFeatureAvailable('custom-pet')) {
-    ctx.notifyRenderer('upgrade-prompt', { feature: 'custom-pet' });
-    return;
-  }
   const imagePath = await pickImageFor('sleepImage', '选择睡觉图片（20分钟）');
   if (imagePath) ctx.notifyRenderer('config-change', { sleepImage: imagePath });
 }
 
 async function _pickRestImage() {
-  if (!license.isFeatureAvailable('custom-pet')) {
-    ctx.notifyRenderer('upgrade-prompt', { feature: 'custom-pet' });
-    return;
-  }
   const imagePath = await pickImageFor('restImage', '选择休息图片（20秒）');
   if (imagePath) ctx.notifyRenderer('config-change', { restImage: imagePath });
 }
@@ -205,6 +196,85 @@ async function _setGreetingText() {
   userConfig.greetingText = value;
   saveConfig(userConfig);
   ctx.notifyRenderer('config-change', { greetingText: value });
+}
+
+function showDonationDialog() {
+  if (win) { win.show(); win.focus(); }
+  const dlg = new BrowserWindow({
+    width: 400,
+    height: 550,
+    title: '支持开发者 - EyePet',
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    modal: false,
+    parent: win,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+    }
+  });
+  dlg.setMenuBarVisibility(false);
+  
+  const qrPath = path.join(__dirname, 'assets', 'donation-qrcode.jpeg');
+  const qrDataUrl = toDataUrl(qrPath);
+  
+  dlg.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 30px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+        }
+        h2 { margin: 0 0 10px 0; font-size: 24px; }
+        .amount { 
+          font-size: 32px; 
+          font-weight: bold; 
+          margin: 10px 0 20px 0;
+          text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .qr-container {
+          background: white;
+          padding: 20px;
+          border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        img { width: 280px; height: 280px; }
+        p { margin: 20px 0 0 0; font-size: 14px; opacity: 0.9; text-align: center; line-height: 1.6; }
+        .note { 
+          margin-top: 10px; 
+          padding: 10px; 
+          background: rgba(255,255,255,0.2); 
+          border-radius: 8px; 
+          font-size: 12px;
+          text-align: center;
+        }
+      </style>
+    </head>
+    <body>
+      <h2>☕ 请作者喝杯咖啡</h2>
+      <div class="amount">¥2.88</div>
+      <div class="qr-container">
+        <img src="${qrDataUrl}" alt="Alipay QR Code">
+      </div>
+      <p>感谢您使用 EyePet！<br>您的支持是我持续更新的动力 💪</p>
+      <div class="note">
+        💡 扫码即可支持，无需注册或激活码
+      </div>
+    </body>
+    </html>
+  `)}`);
+  
+  dlg.on('closed', () => dlg.close());
 }
 
 let dragState = { isDragging: false, x: 0, y: 0 };
@@ -286,155 +356,9 @@ ipcMain.handle('pick-tray-icon', () => _pickTrayIcon());
 ipcMain.handle('pick-app-icon', () => _pickAppIcon());
 ipcMain.handle('set-greeting-text', () => _setGreetingText());
 
-ipcMain.handle('get-license-info', () => {
-  const tier = license.getTier();
-  return {
-    tier,
-    isPro: tier === license.TIER.PRO,
-    isTrial: tier === license.TIER.TRIAL,
-    isFree: tier === license.TIER.FREE,
-    trialInfo: license.getTrialInfo(),
-    proFeatures: license.PRO_FEATURES.map(f => ({
-      name: f,
-      available: license.isFeatureAvailable(f)
-    }))
-  };
-});
-
-ipcMain.handle('activate-license', async (_, key) => {
-  const result = await license.activateLicense(key);
-  if (result.success) {
-    ctx.notifyRenderer('license-change', { tier: result.tier });
-    trayManager.updateTrayMenu(ctx);
-  }
-  return result;
-});
-
-ipcMain.handle('check-feature', (_, featureName) => {
-  return { available: license.isFeatureAvailable(featureName) };
-});
-
-ipcMain.handle('show-license-dialog', () => {
-  if (win) { win.show(); win.focus(); }
-  return new Promise((resolve) => {
-    const dlg = new BrowserWindow({
-      width: 360, height: 140,
-      title: '激活 Pro',
-      resizable: false, minimizable: false, maximizable: false,
-      modal: false,
-      webPreferences: {
-        preload: path.join(__dirname, 'dialog-preload.js'),
-        contextIsolation: true, nodeIntegration: false,
-      }
-    });
-    dlg.setMenuBarVisibility(false);
-    dlg.loadFile('input-dialog.html');
-    dlg.once('ready-to-show', () => {
-      dlg.show();
-      dlg.webContents.send('text-input-init', { value: '', placeholder: 'xxxx-xxxx-xxxx-xxxx' });
-    });
-    function cleanup() {
-      ipcMain.removeListener('text-input-result', onResult);
-      ipcMain.removeListener('text-input-cancel', onCancel);
-      if (!dlg.isDestroyed()) dlg.close();
-    }
-    function onResult(_, value) { resolve(value || null); cleanup(); }
-    function onCancel() { resolve(null); cleanup(); }
-    ipcMain.once('text-input-result', onResult);
-    ipcMain.once('text-input-cancel', onCancel);
-    dlg.on('closed', () => resolve(null));
-  });
-});
-
-ipcMain.handle('open-external', (_, url) => {
-  if (url) shell.openExternal(url);
-});
-
-const PAYMENT_URLS = {
-  'buy-alipay': 'https://eyepet.lemonsqueezy.com/checkout/buy/PRO_VARIANT_ID',
-  'buy-wechat': 'https://eyepet.lemonsqueezy.com/checkout/buy/PRO_VARIANT_ID',
-  'buy-intl': 'https://eyepet.lemonsqueezy.com/checkout/buy/PRO_VARIANT_ID'
-};
-
-// Backup: afdian.com (爱发电) for WeChat Pay in China
-// 'buy-wechat': 'https://afdian.com/a/YOUR_USERNAME?pay_type=wx',
-// Note: Create afdian account and replace YOUR_USERNAME with your page username
-
-ipcMain.handle('show-upgrade-dialog', () => {
-  if (win) { win.show(); win.focus(); }
-  return new Promise((resolve) => {
-    const dlg = new BrowserWindow({
-      width: 340,
-      height: 530,
-      title: '升级到 Pro - EyePet',
-      resizable: false,
-      minimizable: false,
-      maximizable: false,
-      modal: false,
-      parent: win,
-      webPreferences: {
-        preload: path.join(__dirname, 'dialog-preload.js'),
-        contextIsolation: true,
-        nodeIntegration: false,
-      }
-    });
-    dlg.setMenuBarVisibility(false);
-    dlg.loadFile('upgrade-dialog.html');
-
-    function cleanup() {
-      ipcMain.removeListener('upgrade-action', onAction);
-      if (!dlg.isDestroyed()) dlg.close();
-    }
-
-    function onAction(_, action) {
-      if (action.startsWith('buy-')) {
-        const url = PAYMENT_URLS[action];
-        if (url) shell.openExternal(url);
-      } else if (action === 'activate') {
-        if (!dlg.isDestroyed()) dlg.close();
-        resolve({ action: 'activate' });
-        return;
-      }
-    }
-
-    ipcMain.on('upgrade-action', onAction);
-    dlg.on('closed', () => { resolve(null); cleanup(); });
-    dlg.once('ready-to-show', () => dlg.show());
-  });
-});
-
-ipcMain.handle('get-happiness-status', () => {
-  return happiness.getStatus();
-});
-
-ipcMain.handle('set-pet-name', (_, name) => {
-  if (!license.isFeatureAvailable('pet-name')) {
-    return { success: false, error: 'Pro feature' };
-  }
-  happiness.setPetName(name);
-  ctx.notifyRenderer('happiness-change', happiness.getStatus());
-  return { success: true, name: happiness.getPetName() };
-});
-
-ipcMain.handle('validate-online', async () => {
-  return await license.validateOnline();
-});
-
-ipcMain.handle('deactivate-license', async () => {
-  const result = await license.deactivateLicense();
-  if (result.success) {
-    ctx.notifyRenderer('license-change', { tier: 'free' });
-    trayManager.updateTrayMenu(ctx);
-  }
-  return result;
-});
-
 app.whenReady().then(() => {
   app.setName('EyePet');
   userConfig = loadConfig();
-  license.setConfigPath(app.getPath('userData'));
-  license.initTrial();
-  happiness.setConfigPath(app.getPath('userData'));
   if (userConfig.savedPosition) {
     ctx.savedPosition = userConfig.savedPosition;
   }
@@ -444,21 +368,6 @@ app.whenReady().then(() => {
 
   sm = stateMachine.create(ctx);
   sm.startGreeting();
-
-  ipcMain.on('state-change', (_, data) => {
-    switch (data.state) {
-      case 'sleeping':
-        happiness.addEvent('cycle-started');
-        break;
-      case 'resting':
-        happiness.addEvent('rest-completed');
-        break;
-      case 'paused':
-        happiness.addEvent('paused');
-        break;
-    }
-    ctx.notifyRenderer('happiness-change', happiness.getStatus());
-  });
 
   globalShortcut.register('CommandOrControl+Shift+E', () => {
     if (win) {
