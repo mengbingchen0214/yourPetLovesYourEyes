@@ -1,6 +1,7 @@
 const { app, BrowserWindow, globalShortcut, screen, dialog, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { autoUpdater } = require('electron-updater');
 
 app.commandLine.appendSwitch('no-sandbox');
 
@@ -384,6 +385,42 @@ app.whenReady().then(() => {
 
   sm = stateMachine.create(ctx);
   sm.startGreeting();
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('update-available', (info) => {
+    console.log('[Update] Update available:', info.version);
+    dialog.showMessageBox({
+      type: 'info',
+      title: '发现新版本',
+      message: `发现新版本 ${info.version}，正在下载...`,
+      detail: info.releaseNotes || ''
+    });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('[Update] Update downloaded:', info.version);
+    dialog.showMessageBox({
+      type: 'info',
+      title: '更新就绪',
+      message: `版本 ${info.version} 已下载完成`,
+      detail: '重启应用以安装更新',
+      buttons: ['稍后', '立即重启']
+    }).then((result) => {
+      if (result.response === 1) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.error('[Update] Error:', err.message);
+  });
+
+  autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+    console.error('[Update] Failed to check for updates:', err.message);
+  });
 
   globalShortcut.register('CommandOrControl+Shift+E', () => {
     if (win) {
