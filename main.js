@@ -343,10 +343,14 @@ ipcMain.handle('get-state', () => {
 });
 
 ipcMain.handle('get-config', () => {
+  const defaultSleepImage = toDataUrl(path.join(__dirname, 'assets', 'angel.png'));
+  const defaultRestImage = toDataUrl(path.join(__dirname, 'assets', 'angel-wakeup.png'));
   return {
-    sleepImage: toDataUrl(userConfig.sleepImage),
-    restImage: toDataUrl(userConfig.restImage),
+    sleepImage: userConfig.sleepImage ? toDataUrl(userConfig.sleepImage) : defaultSleepImage,
+    restImage: userConfig.restImage ? toDataUrl(userConfig.restImage) : defaultRestImage,
     greetingText: userConfig.greetingText ?? '我是安球，阿弥陀佛。',
+    defaultSleepImage,
+    defaultRestImage
   };
 });
 

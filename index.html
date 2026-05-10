@@ -210,7 +210,7 @@ body {
   
   <!-- 打招呼界面 -->
   <div id="greeting-screen" style="background: rgba(200,200,255,0.9); border-radius: 20px; padding: 10px;">
-    <img src="assets/angel.png" alt="安球" style="width:120px;height:120px;object-fit:contain;">
+    <img id="greeting-pet-img" src="" alt="安球" style="width:120px;height:120px;object-fit:contain;">
     <div class="greeting-text">我是安球，阿弥陀佛。</div>
     <button class="start-btn" onclick="startCycle()">开始护眼</button>
   </div>
@@ -218,7 +218,7 @@ body {
   <!-- 宠物主体 -->
   <div class="pet" id="pet">
     <div id="pet-name-display"></div>
-    <img id="pet-sprite" src="assets/angel.png" alt="护眼宠物">
+    <img id="pet-sprite" src="" alt="护眼宠物">
     <span id="mood-emoji"></span>
     <div id="happiness-bar"></div>
   </div>
@@ -281,6 +281,15 @@ function applyConfig(config) {
   if (config.greetingText != null) {
     const el = document.querySelector('.greeting-text');
     if (el) el.textContent = config.greetingText;
+  }
+  
+  const greetingImg = document.getElementById('greeting-pet-img');
+  if (greetingImg && config.defaultSleepImage) {
+    greetingImg.src = config.defaultSleepImage;
+  }
+  
+  if (!petSprite.src && config.defaultSleepImage) {
+    petSprite.src = config.defaultSleepImage;
   }
 }
 
