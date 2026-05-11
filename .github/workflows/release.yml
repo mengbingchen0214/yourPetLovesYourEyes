@@ -24,7 +24,9 @@ jobs:
           cache: 'pnpm'
 
       - name: Install pnpm globally
-        run: npm install -g pnpm@9
+        run: |
+          npm install -g pnpm@9
+          echo "$(npm bin -g)" >> $GITHUB_PATH
 
       - name: Install dependencies
         run: |
@@ -65,8 +67,9 @@ jobs:
           cache: 'pnpm'
 
       - name: Install pnpm globally
-        run: npm install -g pnpm@9
-        shell: bash
+        run: |
+          npm install -g pnpm@9
+          echo "$(npm bin -g)" >> $GITHUB_PATH
 
       - name: Install dependencies
         run: |
@@ -109,7 +112,9 @@ jobs:
           cache: 'pnpm'
 
       - name: Install pnpm globally
-        run: npm install -g pnpm@9
+        run: |
+          npm install -g pnpm@9
+          echo "$(npm bin -g)" >> $GITHUB_PATH
 
       - name: Install dependencies
         run: |
