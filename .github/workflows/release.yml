@@ -23,22 +23,29 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: Install pnpm globally
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        shell: bash
         run: |
-          npm install -g pnpm@9
-          echo "$(npm bin -g)" >> $GITHUB_PATH
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: |
-          for i in 1 2 3; do
-            pnpm install && break || sleep 10
-          done
+        run: pnpm install --frozen-lockfile
 
       - name: Build macOS app
-        run: |
-          for i in 1 2 3; do
-            pnpm run build:mac && break || sleep 10
-          done
+        run: pnpm run build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -66,23 +73,30 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: Install pnpm globally
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        shell: bash
         run: |
-          npm install -g pnpm@9
-          echo "$(npm bin -g)" >> $GITHUB_PATH
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: |
-          for i in 1 2 3; do
-            pnpm install && break || sleep 10
-          done
+        run: pnpm install --frozen-lockfile
         shell: bash
 
       - name: Build Windows app
-        run: |
-          for i in 1 2 3; do
-            pnpm run build:win && break || sleep 10
-          done
+        run: pnpm run build:win
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,22 +125,28 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: Install pnpm globally
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
         run: |
-          npm install -g pnpm@9
-          echo "$(npm bin -g)" >> $GITHUB_PATH
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: |
-          for i in 1 2 3; do
-            pnpm install && break || sleep 10
-          done
+        run: pnpm install --frozen-lockfile
 
       - name: Build Linux app
-        run: |
-          for i in 1 2 3; do
-            pnpm run build:linux && break || sleep 10
-          done
+        run: pnpm run build:linux
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
