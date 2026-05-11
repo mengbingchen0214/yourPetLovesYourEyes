@@ -65,7 +65,7 @@ git push --tags
 ```
 
 这将创建一个新的 GitHub Release，包含所有平台的安装包：
-- **macOS**: DMG 和 ZIP (ARM64)
+- **macOS**: DMG 和 ZIP (ARM64 + x64)
 - **Windows**: NSIS 安装包和便携版 EXE (x64)
 - **Linux**: AppImage、DEB 和 RPM (x64)
 

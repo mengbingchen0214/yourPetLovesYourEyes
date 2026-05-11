@@ -65,7 +65,7 @@ git push --tags
 ```
 
 This creates a new GitHub Release with installers for all platforms:
-- **macOS**: DMG and ZIP (ARM64)
+- **macOS**: DMG and ZIP (ARM64 + x64)
 - **Windows**: NSIS installer and portable EXE (x64)
 - **Linux**: AppImage, DEB, and RPM (x64)
 
