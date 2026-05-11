@@ -17,12 +17,66 @@
 
 ## Installation
 
+### macOS (After Download)
+
+If macOS says "EyePet is damaged and cannot be run":
+
+1. **Option A - Quick Bypass**:
+   - Right-click **EyePet.app** → **Open**
+   - Click **"Open"** button in the dialog
+   - macOS will remember this choice for future launches
+
+2. **Option B - Terminal Command**:
+   ```bash
+   sudo spctl --master-disable
+   ```
+   (This disables Gatekeeper temporarily - re-enable with `--master-enable` after opening the app)
+
+3. **Option C - Extract ZIP** (Recommended):
+   - Download the **ZIP** file instead of DMG
+   - Extract it and run EyePet directly
+   - Same right-click → Open workaround may still be needed
+
 ### Development Mode
 
 ```bash
 npm install
 npm run dev
 ```
+
+### Building & Releasing
+
+This project uses **GitHub Actions** for automated multi-platform builds. The CI/CD pipeline automatically builds installers for macOS, Windows, and Linux.
+
+#### Manual Build (Recommended for Testing)
+
+1. Go to [GitHub Actions](https://github.com/mengbingchen0214/yourPetLovesYourEyes/actions/workflows/release.yml)
+2. Click **"Run workflow"** → **"Run workflow"**
+3. Wait for the build to complete (typically 10-15 minutes)
+4. Download the artifacts from the workflow run
+
+#### Automated Release
+
+Push a new version tag to trigger automatic release builds:
+
+```bash
+npm version patch  # or minor/major
+git push --tags
+```
+
+This creates a new GitHub Release with installers for all platforms:
+- **macOS**: DMG and ZIP (ARM64)
+- **Windows**: NSIS installer and portable EXE (x64)
+- **Linux**: AppImage, DEB, and RPM (x64)
+
+#### Build Requirements
+
+- Node.js 22+
+- pnpm 9+
+- Platform-specific builds run on GitHub-hosted runners:
+  - macOS builds: `macos-latest`
+  - Windows builds: `windows-latest`
+  - Linux builds: `ubuntu-latest`
 
 ---
 

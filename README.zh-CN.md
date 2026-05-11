@@ -17,12 +17,66 @@
 
 ## 安装
 
+### macOS（下载后）
+
+如果 macOS 提示「护眼Pet 已损坏，无法打开」：
+
+1. **方案 A - 快速绕过**：
+   - 右键点击 **护眼Pet.app** → **打开**
+   - 点击对话框中的「打开」按钮
+   - macOS 会记住这个选择，以后可以直接打开
+
+2. **方案 B - 终端命令**：
+   ```bash
+   sudo spctl --master-disable
+   ```
+   （这会临时关闭 Gatekeeper，打开 app 后用 `--master-enable` 重新开启）
+
+3. **方案 C - 解压 ZIP**（推荐）：
+   - 下载 **ZIP** 文件而不是 DMG
+   - 解压后直接运行护眼Pet
+   - 可能仍需要右键 → 打开的临时绕过方法
+
 ### 开发模式运行
 
 ```bash
 npm install
 npm run dev
 ```
+
+### 构建与发布
+
+本项目使用 **GitHub Actions** 进行自动化多平台构建。CI/CD 流水线会自动为 macOS、Windows 和 Linux 构建安装包。
+
+#### 手动构建（推荐用于测试）
+
+1. 访问 [GitHub Actions](https://github.com/mengbingchen0214/yourPetLovesYourEyes/actions/workflows/release.yml)
+2. 点击 **"Run workflow"** → **"Run workflow"**
+3. 等待构建完成（通常需要 10-15 分钟）
+4. 从工作流运行记录中下载构建产物
+
+#### 自动发布
+
+推送新的版本标签以触发自动发布构建：
+
+```bash
+npm version patch  # 或 minor/major
+git push --tags
+```
+
+这将创建一个新的 GitHub Release，包含所有平台的安装包：
+- **macOS**: DMG 和 ZIP (ARM64)
+- **Windows**: NSIS 安装包和便携版 EXE (x64)
+- **Linux**: AppImage、DEB 和 RPM (x64)
+
+#### 构建要求
+
+- Node.js 22+
+- pnpm 9+
+- 平台特定构建在 GitHub 托管的运行器上执行：
+  - macOS 构建: `macos-latest`
+  - Windows 构建: `windows-latest`
+  - Linux 构建: `ubuntu-latest`
 
 ---
 
