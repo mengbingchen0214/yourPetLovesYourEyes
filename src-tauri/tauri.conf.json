@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "identifier": "com.eyepet.app",
   "build": {
-    "frontendDist": "../",
+    "frontendDist": "../web",
     "devUrl": null
   },
   "app": {
