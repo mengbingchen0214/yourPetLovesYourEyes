@@ -2,17 +2,26 @@ mod config;
 mod window_manager;
 
 use config::{load_config, save_config, Config};
+use std::path::PathBuf;
+use std::sync::Mutex;
 use tauri::Manager;
 use tauri::webview::WebviewWindow;
 
-#[tauri::command]
-fn get_config(app: tauri::AppHandle) -> Config {
-    load_config(&app)
+pub struct AppState {
+    pub config: Mutex<Config>,
+    pub data_dir: PathBuf,
 }
 
 #[tauri::command]
-fn set_config(app: tauri::AppHandle, config: Config) {
-    save_config(&app, &config);
+fn get_config(state: tauri::State<'_, AppState>) -> Config {
+    state.config.lock().unwrap().clone()
+}
+
+#[tauri::command]
+fn set_config(state: tauri::State<'_, AppState>, config: Config) {
+    let mut guard = state.config.lock().unwrap();
+    *guard = config.clone();
+    save_config(&state.data_dir, &config);
 }
 
 #[tauri::command]
@@ -43,13 +52,20 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_single_instance::init(|_app, _argv, _cwd| {}))
         .setup(|app| {
-            let handle = app.handle();
-
             // Set activation policy to Accessory on macOS (no dock icon)
             #[cfg(target_os = "macos")]
             {
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             }
+
+            // Get app data dir and load config
+            let data_dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
+            let config = load_config(&data_dir);
+
+            app.manage(AppState {
+                config: Mutex::new(config),
+                data_dir,
+            });
 
             // Show the main window
             if let Some(window) = app.get_webview_window("main") {

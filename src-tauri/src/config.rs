@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use tauri::AppHandle;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Position {
@@ -19,23 +18,20 @@ pub struct Config {
     pub saved_position: Option<Position>,
 }
 
-fn config_path(app: &AppHandle) -> PathBuf {
-    app.path()
-        .app_data_dir()
-        .unwrap_or_else(|_| PathBuf::from("."))
-        .join("config.json")
+pub fn config_path(data_dir: &PathBuf) -> PathBuf {
+    data_dir.join("config.json")
 }
 
-pub fn load_config(app: &AppHandle) -> Config {
-    let path = config_path(app);
+pub fn load_config(data_dir: &PathBuf) -> Config {
+    let path = config_path(data_dir);
     match fs::read_to_string(&path) {
         Ok(content) => serde_json::from_str(&content).unwrap_or_default(),
         Err(_) => Config::default(),
     }
 }
 
-pub fn save_config(app: &AppHandle, config: &Config) {
-    let path = config_path(app);
+pub fn save_config(data_dir: &PathBuf, config: &Config) {
+    let path = config_path(data_dir);
     if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
     }
