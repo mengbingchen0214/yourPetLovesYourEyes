@@ -1,0 +1,45 @@
+{
+  "productName": "EyePet",
+  "version": "2.0.0",
+  "identifier": "com.eyepet.app",
+  "build": {
+    "frontendDist": "../",
+    "devUrl": null
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "EyePet",
+        "width": 200,
+        "height": 260,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "skipTaskbar": true,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "macOSPrivateApi": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.icns",
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
+    "category": "public.app-category.utilities"
+  },
+  "plugins": {
+    "shell": {
+      "open": true
+    }
+  }
+}

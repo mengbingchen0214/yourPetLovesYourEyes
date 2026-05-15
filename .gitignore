@@ -11,3 +11,7 @@ __pycache__/
 *.pyc
 userData/
 .env
+
+# Rust / Tauri
+src-tauri/target/
+Cargo.lock

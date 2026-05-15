@@ -1,0 +1,24 @@
+[package]
+name = "eyepet"
+version = "2.0.0"
+description = "EyePet - Desktop pet that reminds you to rest your eyes"
+authors = ["Mengbing Chen <mengbingchen0214@gmail.com>"]
+license = "MIT"
+edition = "2021"
+
+[lib]
+name = "eyepet_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api"] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+# tauri-plugin-updater = "2"  # Added in Phase 3
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["time", "rt-multi-thread", "macros"] }
