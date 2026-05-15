@@ -1,4 +1,4 @@
-name: Build & Release
+name: Release
 
 on:
   push:
@@ -10,187 +10,90 @@ permissions:
   contents: write
 
 jobs:
-  build-mac:
-    name: Build macOS
-    runs-on: macos-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: '--target aarch64-apple-darwin'
+            name: macos-arm64
+          - platform: macos-latest
+            args: '--target x86_64-apple-darwin'
+            name: macos-x64
+          - platform: windows-latest
+            args: ''
+            name: windows-x64
+          - platform: ubuntu-22.04
+            args: ''
+            name: linux-x64
+
+    runs-on: ${{ matrix.platform }}
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          version: 9
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Get pnpm store directory
-        shell: bash
+      - name: Install dependencies (Ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build macOS app
-        run: pnpm run build:mac
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: ${{ matrix.args }}
 
-      - name: Upload artifacts
+      - name: Upload macOS artifact
+        if: matrix.platform == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: mac-builds
+          name: eyepet-${{ matrix.name }}
           path: |
-            release/*.dmg
-            release/*.zip
-            release/*.blockmap
-            release/latest-mac.yml
-          retention-days: 7
+            src-tauri/target/**/bundle/macos/*.app
+            src-tauri/target/**/bundle/dmg/*.dmg
+          retention-days: 30
 
-  build-windows:
-    name: Build Windows
-    runs-on: windows-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        shell: bash
-
-      - name: Build Windows app
-        run: pnpm run build:win
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload artifacts
+      - name: Upload Windows artifact
+        if: matrix.platform == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: windows-builds
+          name: eyepet-${{ matrix.name }}
           path: |
-            release/*.exe
-            release/*.zip
-            release/*.blockmap
-            release/latest.yml
-          retention-days: 7
+            src-tauri/target/**/bundle/nsis/*.exe
+          retention-days: 30
 
-  build-linux:
-    name: Build Linux
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Get pnpm store directory
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Linux app
-        run: pnpm run build:linux
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload artifacts
+      - name: Upload Linux artifact
+        if: matrix.platform == 'ubuntu-22.04'
         uses: actions/upload-artifact@v4
         with:
-          name: linux-builds
+          name: eyepet-${{ matrix.name }}
           path: |
-            release/*.AppImage
-            release/*.deb
-            release/*.rpm
-            release/*.blockmap
-            release/latest-linux.yml
-          retention-days: 7
+            src-tauri/target/**/bundle/appimage/*.AppImage
+            src-tauri/target/**/bundle/deb/*.deb
+          retention-days: 30
 
   release:
-    name: Create Release
-    needs: [build-mac, build-windows, build-linux]
+    needs: build
     runs-on: ubuntu-latest
-    if: success()
+    if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: Download Mac builds
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          name: mac-builds
-          path: release/
-
-      - name: Download Windows builds
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-builds
-          path: release/
-
-      - name: Download Linux builds
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-builds
-          path: release/
-
-      - name: List files
-        run: ls -lh release/ || echo "No release files found"
+          path: artifacts/
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
-        if: success()
         with:
-          files: release/*
+          files: artifacts/**/*
           draft: false
           prerelease: false
           generate_release_notes: true
