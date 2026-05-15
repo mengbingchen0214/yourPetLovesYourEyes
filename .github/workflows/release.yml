@@ -51,30 +51,27 @@ jobs:
         with:
           args: ${{ matrix.args }}
 
-      - name: Upload macOS artifact
+      - name: Upload macOS DMG
         if: matrix.platform == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: eyepet-${{ matrix.name }}
-          path: |
-            src-tauri/target/**/bundle/macos/*.app
-            src-tauri/target/**/bundle/dmg/*.dmg
+          name: eyepet-${{ matrix.name }}-dmg
+          path: src-tauri/target/**/bundle/dmg/*.dmg
           retention-days: 30
 
-      - name: Upload Windows artifact
+      - name: Upload Windows EXE
         if: matrix.platform == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: eyepet-${{ matrix.name }}
-          path: |
-            src-tauri/target/**/bundle/nsis/*.exe
+          name: eyepet-windows-x64-exe
+          path: src-tauri/target/**/bundle/nsis/*.exe
           retention-days: 30
 
-      - name: Upload Linux artifact
+      - name: Upload Linux artifacts
         if: matrix.platform == 'ubuntu-22.04'
         uses: actions/upload-artifact@v4
         with:
-          name: eyepet-${{ matrix.name }}
+          name: eyepet-linux-x64
           path: |
             src-tauri/target/**/bundle/appimage/*.AppImage
             src-tauri/target/**/bundle/deb/*.deb
@@ -85,15 +82,28 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: Download all artifacts
+      - name: Download DMG artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts/
+          pattern: "eyepet-*-dmg"
+          path: release-assets/
+
+      - name: Download EXE artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "eyepet-*-exe"
+          path: release-assets/
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "eyepet-linux-*"
+          path: release-assets/
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/**/*
+          files: release-assets/**/*
           draft: false
           prerelease: false
           generate_release_notes: true
