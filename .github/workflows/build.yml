@@ -18,12 +18,16 @@ jobs:
         include:
           - platform: macos-latest
             args: '--target aarch64-apple-darwin'
+            name: macos-arm64
           - platform: macos-latest
             args: '--target x86_64-apple-darwin'
+            name: macos-x64
           - platform: windows-latest
             args: ''
+            name: windows-x64
           - platform: ubuntu-22.04
             args: ''
+            name: linux-x64
 
     runs-on: ${{ matrix.platform }}
 
@@ -53,3 +57,29 @@ jobs:
         with:
           args: ${{ matrix.args }}
           includeDebug: true
+
+      - name: Upload macOS artifact
+        if: matrix.platform == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eyepet-${{ matrix.name }}
+          path: src-tauri/target/release/bundle/macos/EyePet.app
+          retention-days: 7
+
+      - name: Upload Windows artifact
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eyepet-${{ matrix.name }}
+          path: src-tauri/target/release/bundle/nsis/EyePet_*.exe
+          retention-days: 7
+
+      - name: Upload Linux artifact
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eyepet-${{ matrix.name }}
+          path: |
+            src-tauri/target/release/bundle/appimage/EyePet_*.AppImage
+            src-tauri/target/release/bundle/deb/EyePet_*.deb
+          retention-days: 7
