@@ -294,7 +294,17 @@ function applyConfig(config) {
 }
 
 async function init() {
-  if (window.eyePet) {
+  // Tauri mode
+  if (window.__TAURI__) {
+    try {
+      const config = await window.__TAURI__.core.invoke('get_config');
+      applyConfig(config);
+    } catch (e) {
+      console.error('[EyePet] Failed to load config:', e);
+    }
+  }
+  // Electron fallback (dev mode)
+  else if (window.eyePet) {
     const config = await window.eyePet.getConfig();
     applyConfig(config);
 
@@ -324,18 +334,22 @@ async function init() {
     showBubble('右键托盘图标查看设置');
   });
   
-  // 拖动实现
+  // 拖动实现 - use Tauri's native drag
   let isDragging = false;
   
   petContainer.addEventListener('mousedown', (e) => {
     if (e.button === 0) {
       isDragging = true;
-      window.eyePet.startDrag(e.screenX, e.screenY);
+      if (window.__TAURI__) {
+        window.__TAURI__.core.window.getCurrentWindow().startDragging();
+      } else if (window.eyePet) {
+        window.eyePet.startDrag(e.screenX, e.screenY);
+      }
     }
   });
   
   document.addEventListener('mousemove', (e) => {
-    if (isDragging) {
+    if (isDragging && window.eyePet && !window.__TAURI__) {
       window.eyePet.drag(e.screenX, e.screenY);
     }
   });
@@ -343,7 +357,9 @@ async function init() {
   document.addEventListener('mouseup', () => {
     if (isDragging) {
       isDragging = false;
-      window.eyePet.endDrag();
+      if (window.eyePet && !window.__TAURI__) {
+        window.eyePet.endDrag();
+      }
     }
   });
 }
@@ -479,7 +495,9 @@ async function toggleOverlay() {
 }
 
 async function quitApp() {
-  if (window.eyePet) {
+  if (window.__TAURI__) {
+    await window.__TAURI__.core.invoke('quit_app');
+  } else if (window.eyePet) {
     await window.eyePet.quitApp();
   }
 }
