@@ -40,8 +40,8 @@ If macOS says "EyePet is damaged and cannot be run":
 ### Development Mode
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 ### Building & Releasing
@@ -115,21 +115,37 @@ Thank you for your support! ❤️
 
 ```
 eye-pet/
-├── main.js              # Electron main process (state machine, timer, tray)
-├── preload.js           # Renderer IPC bridge
-├── index.html           # Desktop pet UI
-├── overlay.html         # Full-screen rest reminder overlay
-├── input-dialog.html    # Greeting text input dialog
-├── dialog-preload.js    # Dialog IPC bridge
-├── assets/              # Pet image assets
-│   ├── angel.png        # Default pet image
-│   ├── angel-wakeup.png # Rest reminder image
-│   └── donation-qrcode.jpeg # Alipay QR code
+├── main.js              # Electron main process (tray, timer, window management)
+├── package.json         # Dependencies and build configuration
+├── pnpm-workspace.yaml  # Workspace configuration
+├── web/                 # Electron renderer UI and assets
+│   ├── index.html           # Desktop pet UI
+│   ├── preload.js           # Renderer IPC bridge
+│   ├── overlay.html         # Full-screen rest reminder overlay
+│   ├── input-dialog.html    # Greeting text input dialog
+│   ├── upgrade-dialog.html  # App upgrade dialog
+│   ├── dialog-preload.js    # Dialog IPC bridge
+│   ├── assets/              # Pet image assets
+│   │   ├── angel.png            # Default pet image
+│   │   ├── angel-wakeup.png     # Rest reminder image
+│   │   └── donation-qrcode.jpeg # Alipay QR code
+│   └── lib/                 # Core logic modules
+│       ├── state-machine.js
+│       ├── tray-manager.js
+│       ├── overlay-manager.js
+│       ├── happiness.js
+│       ├── license.js
+│       ├── payment.js
+│       ├── config.js
+│       └── constants.js
 ├── backend/             # Image processing backend (optional, standalone service)
 │   ├── server.py        # FastAPI: background removal + Q-version processing
 │   └── requirements.txt
-├── web/                 # Netlify landing page
-│   └── index.html
+├── src-tauri/           # Tauri framework integration (Rust)
+├── test/                # Unit test suite
+│   ├── state-machine.test.js
+│   ├── happiness.test.js
+│   └── license.test.js
 ├── build/               # Icon resources and build config
 └── scripts/
     └── package.sh       # Build script
@@ -166,6 +182,6 @@ Endpoints:
 
 ## System Requirements
 
-- macOS 12+
+- macOS 12+, Windows 10+, or Linux (Ubuntu 18.04+)
 - Eye care reminder works offline
 - All features completely free, voluntary donations welcome to support development
