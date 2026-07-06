@@ -1,12 +1,12 @@
 # 护眼Pet 🐾
 
-> 一只住在你 Mac 桌面上的小宠物，每 20 分钟提醒你望远护眼。
+> 一只住在你桌面上的小宠物，每 20 分钟提醒你望远护眼。
 
 ---
 
 ## 功能
 
-- **护眼提醒**：遵循 20-20-20 法则——每 20 分钟触发一次，全屏遮罩提示你望向 20 米外 20 秒
+- **护眼提醒**：遵循 20-20-20 法则——每 20 分钟触发一次，全屏遮罩提示你望向 20 英尺（约6米）外 20 秒
 - **桌面常驻**：无边框透明窗口，始终置顶，可随意拖动位置
 - **宠物动画**：睡觉时轻微浮动，休息提醒时点头动画
 - **个性化**：自定义宠物图片（睡觉/休息两张）、顶栏图标、App 图标、问候语
@@ -40,8 +40,8 @@
 ### 开发模式运行
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 ### 构建与发布
@@ -115,21 +115,37 @@ git push --tags
 
 ```
 eye-pet/
-├── main.js              # Electron 主进程（状态机、计时器、托盘）
-├── preload.js           # 渲染进程 IPC 桥接
-├── index.html           # 桌面宠物界面
-├── overlay.html         # 休息提醒全屏遮罩
-├── input-dialog.html    # 问候语输入弹窗
-├── dialog-preload.js    # 弹窗 IPC 桥接
-├── assets/              # 宠物图片资源
-│   ├── angel.png        # 默认宠物图片
-│   ├── angel-wakeup.png # 休息提醒图片
-│   └── donation-qrcode.jpeg # 支付宝收款码
+├── main.js              # Electron 主进程（托盘、计时器、窗口管理）
+├── package.json         # 依赖项与构建配置
+├── pnpm-workspace.yaml  # 工作区配置
+├── web/                 # Electron 渲染层界面与资源
+│   ├── index.html           # 桌面宠物界面
+│   ├── preload.js           # 渲染进程 IPC 桥接
+│   ├── overlay.html         # 休息提醒全屏遮罩
+│   ├── input-dialog.html    # 问候语输入弹窗
+│   ├── upgrade-dialog.html  # 升级提示弹窗
+│   ├── dialog-preload.js    # 弹窗 IPC 桥接
+│   ├── assets/              # 宠物图片资源
+│   │   ├── angel.png            # 默认宠物图片
+│   │   ├── angel-wakeup.png     # 休息提醒图片
+│   │   └── donation-qrcode.jpeg # 支付宝收款码
+│   └── lib/                 # 核心逻辑模块
+│       ├── state-machine.js
+│       ├── tray-manager.js
+│       ├── overlay-manager.js
+│       ├── happiness.js
+│       ├── license.js
+│       ├── payment.js
+│       ├── config.js
+│       └── constants.js
 ├── backend/             # 图片处理后端（可选，独立服务）
 │   ├── server.py        # FastAPI：去背景 + Q版化处理
 │   └── requirements.txt
-├── web/                 # Netlify 落地页
-│   └── index.html
+├── src-tauri/           # Tauri 框架集成（Rust）
+├── test/                # 单元测试套件
+│   ├── state-machine.test.js
+│   ├── happiness.test.js
+│   └── license.test.js
 ├── build/               # 图标资源和打包配置
 └── scripts/
     └── package.sh       # 打包脚本
@@ -166,6 +182,6 @@ python server.py
 
 ## 系统要求
 
-- macOS 12+
+- macOS 12+、Windows 10+ 或 Linux（Ubuntu 18.04+）
 - 护眼提醒功能无需联网
 - 所有功能完全免费，欢迎自愿捐赠支持开发
